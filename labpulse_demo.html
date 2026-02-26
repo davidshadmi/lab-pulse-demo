@@ -1,0 +1,286 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <title>LabPulse | ניהול לפי חריגים v1.6</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.3.2/papaparse.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Assistant:wght@300;400;600;800&display=swap" rel="stylesheet">
+    <style>
+        body { font-family: 'Assistant', sans-serif; scroll-behavior: smooth; }
+        .chart-container { position: relative; width: 100%; height: 350px; }
+        .modal { display: none; }
+        .modal.active { display: flex; }
+        .rec-row { border-right: 5px solid; }
+        .status-faulty { border-color: #ef4444; background-color: #fef2f2; }
+        .status-maintenance { border-color: #f59e0b; background-color: #fffbeb; }
+    </style>
+</head>
+<body class="bg-slate-50 text-slate-900 min-h-screen">
+
+    <nav class="bg-slate-900 text-white shadow-xl p-4 sticky top-0 z-50">
+        <div class="container mx-auto flex justify-between items-center">
+            <h1 class="text-2xl font-black tracking-tight">LabPulse <span class="text-blue-400 text-xs font-normal">v1.6</span></h1>
+            <label class="bg-blue-600 hover:bg-blue-700 px-6 py-2 rounded-full cursor-pointer text-sm font-bold shadow-lg transition">
+                טען קובץ CSV
+                <input type="file" id="csvInput" accept=".csv" class="hidden">
+            </label>
+        </div>
+    </nav>
+
+    <main class="container mx-auto mt-8 px-4 pb-20">
+        
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-10">
+            <div class="bg-white p-6 rounded-2xl shadow-sm border-b-4 border-blue-500">
+                <p class="text-gray-400 text-xs font-bold uppercase">סה"כ פריטים (Fleet)</p>
+                <p id="stat-total" class="text-4xl font-black italic">0</p>
+            </div>
+            <div class="bg-white p-6 rounded-2xl shadow-sm border-b-4 border-rose-600">
+                <p class="text-gray-400 text-xs font-bold uppercase">חריגים לטיפול מיידי</p>
+                <p id="stat-faulty" class="text-4xl font-black text-rose-600 italic">0</p>
+            </div>
+            <div class="bg-white p-6 rounded-2xl shadow-sm border-b-4 border-emerald-500">
+                <p class="text-gray-400 text-xs font-bold uppercase">תקינים בכיסוי שירות</p>
+                <p id="stat-covered" class="text-4xl font-black text-emerald-600 italic">0</p>
+            </div>
+        </div>
+
+        <div class="bg-white p-6 rounded-2xl shadow-md mb-12">
+            <h3 class="font-bold mb-4 text-slate-700 border-b pb-2 italic">מצב בריאות הציוד לפי מעבדות</h3>
+            <div class="chart-container">
+                <canvas id="labChart"></canvas>
+            </div>
+        </div>
+
+        <div class="bg-white rounded-2xl shadow-2xl overflow-hidden border-2 border-rose-500 mb-12">
+            <div class="p-6 bg-rose-600 text-white flex flex-col md:flex-row justify-between items-center">
+                <div>
+                    <h2 class="text-2xl font-black italic">מנוע המלצות אדפטיבי</h2>
+                    <p class="text-xs opacity-90 font-bold">מציג חריגים קריטיים וצפי תחזוקה בלבד</p>
+                </div>
+            </div>
+            <div class="overflow-x-auto">
+                <table class="w-full text-right text-sm">
+                    <thead class="bg-slate-100 text-slate-700 font-bold">
+                        <tr>
+                            <th class="px-6 py-4 italic">מזהה (ME)</th>
+                            <th class="px-6 py-4">דגם</th>
+                            <th class="px-6 py-4 text-center">סטטוס מכשיר</th>
+                            <th class="px-6 py-4">המלצת המערכת</th>
+                            <th class="px-6 py-4 text-center">פעולה</th>
+                        </tr>
+                    </thead>
+                    <tbody id="recommendation-body" class="divide-y divide-slate-100 italic">
+                        <tr><td colspan="5" class="p-20 text-center text-slate-400 italic font-bold">אנא טען קובץ CSV כדי להריץ את המנוע החכם...</td></tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <div class="bg-white rounded-2xl shadow-lg overflow-hidden border border-slate-200">
+            <div class="p-6 border-b flex justify-between items-center">
+                <h2 class="text-xl font-bold">מלאי מלא (Searchable)</h2>
+                <input type="text" id="searchInput" placeholder="חפש לפי ME או דגם..." class="border rounded-xl px-4 py-2 w-64 outline-none focus:ring-2 focus:ring-blue-400">
+            </div>
+            <div class="max-h-80 overflow-y-auto">
+                <table class="w-full text-right text-xs">
+                    <tbody id="full-inventory-body" class="divide-y divide-slate-50"></tbody>
+                </table>
+            </div>
+        </div>
+    </main>
+
+    <div id="detailModal" class="modal fixed inset-0 bg-slate-900/90 items-center justify-center z-[100] p-4">
+        <div class="bg-white rounded-3xl w-full max-w-2xl p-8 relative shadow-2xl overflow-y-auto max-h-[95vh]">
+            <button onclick="closeModal()" class="absolute top-4 left-4 text-2xl font-bold hover:text-red-500">✕</button>
+            <div id="modalContent"></div>
+        </div>
+    </div>
+
+    <script>
+        let allItems = [];
+        let labChart;
+
+        // 1. IMPROVED DATE FORMATTER
+        function fixDate(str) {
+            if (!str || str === "nan") return "-";
+            // Check if string contains "2005" logic (assuming it was a placeholder or bad parse)
+            const dateObj = new Date(str);
+            if (!isNaN(dateObj.getTime())) {
+                const day = String(dateObj.getDate()).padStart(2, '0');
+                const month = String(dateObj.getMonth() + 1).padStart(2, '0');
+                const year = dateObj.getFullYear();
+                return `${day}/${month}/${year}`;
+            }
+            return str;
+        }
+
+        document.getElementById('csvInput').addEventListener('change', function(e) {
+            const file = e.target.files[0];
+            Papa.parse(file, {
+                header: false,
+                skipEmptyLines: true,
+                complete: function(results) { processCSV(results.data); }
+            });
+        });
+
+        function processCSV(data) {
+            allItems = data.slice(1).map((row, index) => {
+                const isCovered = row[8] == "1" || row[10] == "1";
+                // Only mark ~5% as faulty for a clean demo
+                const isFaulty = (index % 35 === 0); 
+                const needsMaintenance = (index % 45 === 7);
+
+                return {
+                    id: row[1] || "ME-0000",
+                    sn: row[2] || "-",
+                    model: row[3] || "ציוד כללי",
+                    lab: row[6] || "מעבדה כללית",
+                    warrantyEnd: fixDate(row[7]),
+                    isCovered: isCovered,
+                    purchaseDate: fixDate(row[11]),
+                    shebaSku: row[12] || "-",
+                    mfr: row[13] || "-",
+                    supplier: row[14] || "-",
+                    status: isFaulty ? "תקול" : "תקין",
+                    needsAction: isFaulty || needsMaintenance,
+                    actionType: isFaulty ? "תקלה קריטית" : "תחזוקה מונעת"
+                };
+            }).filter(i => i.id !== "לא ידוע");
+
+            updateUI();
+        }
+
+        function updateUI() {
+            document.getElementById('stat-total').innerText = allItems.length.toLocaleString();
+            document.getElementById('stat-faulty').innerText = allItems.filter(i => i.needsAction).length;
+            document.getElementById('stat-covered').innerText = allItems.filter(i => i.isCovered && i.status === "תקין").length;
+
+            renderRecommendations();
+            renderFullInventory();
+            renderCharts();
+        }
+
+        function renderRecommendations() {
+            const body = document.getElementById('recommendation-body');
+            const exceptions = allItems.filter(i => i.needsAction).slice(0, 8); // LIMIT TO 8 FOR DEMO
+            
+            body.innerHTML = exceptions.map(item => `
+                <tr class="rec-row ${item.status === 'תקול' ? 'status-faulty' : 'status-maintenance'} hover:opacity-90 cursor-pointer" onclick="showDetail('${item.id}')">
+                    <td class="px-6 py-4 font-bold text-blue-900 underline">${item.id}</td>
+                    <td class="px-6 py-4">${item.model}</td>
+                    <td class="px-6 py-4 text-center">
+                        <span class="font-black ${item.status === 'תקול' ? 'text-red-600' : 'text-amber-600'}">${item.status}</span>
+                    </td>
+                    <td class="px-6 py-4 text-xs font-bold italic">
+                        ${item.status === 'תקול' ? (item.isCovered ? 'תקן - תחת כיסוי' : 'רכוש חדש - אין כדאיות') : 'תאם תחזוקה - ניצול חוזה'}
+                    </td>
+                    <td class="px-6 py-4 text-center">
+                        <button class="bg-slate-800 text-white px-4 py-2 rounded-lg text-xs font-bold" onclick="event.stopPropagation(); alert('מייל נשלח')">שלח אימייל</button>
+                    </td>
+                </tr>
+            `).join('');
+        }
+
+        function renderFullInventory() {
+            const body = document.getElementById('full-inventory-body');
+            body.innerHTML = allItems.map(item => `
+                <tr class="hover:bg-slate-50 cursor-pointer" onclick="showDetail('${item.id}')">
+                    <td class="px-4 py-2 font-bold">${item.id}</td>
+                    <td class="px-4 py-2">${item.model}</td>
+                    <td class="px-4 py-2 text-slate-500">${item.lab}</td>
+                    <td class="px-4 py-2 font-bold ${item.status === 'תקול' ? 'text-red-500' : 'text-green-500'}">${item.status}</td>
+                </tr>
+            `).join('');
+        }
+
+        function renderCharts() {
+            if(labChart) labChart.destroy();
+            const labs = [...new Set(allItems.map(i => i.lab))].slice(0, 15);
+            labChart = new Chart(document.getElementById('labChart'), {
+                type: 'bar',
+                data: {
+                    labels: labs,
+                    datasets: [
+                        { label: 'תקין', data: labs.map(l => allItems.filter(i => i.lab === l && i.status === "תקין").length), backgroundColor: '#10b981' },
+                        { label: 'תקול/דורש טיפול', data: labs.map(l => allItems.filter(i => i.lab === l && i.status === "תקול").length), backgroundColor: '#f43f5e' }
+                    ]
+                },
+                options: { responsive: true, maintainAspectRatio: false, scales: { x: { stacked: true }, y: { stacked: true } } }
+            });
+        }
+
+        function showDetail(id) {
+            const item = allItems.find(i => i.id === id);
+            const content = document.getElementById('modalContent');
+            
+            content.innerHTML = `
+                <div class="border-b pb-4 mb-6">
+                    <h2 class="text-4xl font-black text-slate-900 tracking-tighter">${item.id}</h2>
+                    <p class="text-slate-500 text-lg font-bold">${item.model} | ${item.mfr}</p>
+                </div>
+                
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-8 text-sm">
+                    <div class="bg-slate-50 p-5 rounded-2xl">
+                        <p class="text-blue-600 font-bold mb-3 italic">פרטי זיהוי רפואי</p>
+                        <p><strong>מחלקה:</strong> ${item.lab}</p>
+                        <p><strong>מק"ט שיבא:</strong> <span class="bg-yellow-100 px-1">${item.shebaSku}</span></p>
+                        <p><strong>S/N:</strong> ${item.sn}</p>
+                    </div>
+                    <div class="bg-slate-50 p-5 rounded-2xl border-r-4 border-slate-300">
+                        <p class="text-blue-600 font-bold mb-3 italic">מחזור חיים ושירות</p>
+                        <p><strong>רכישה:</strong> ${item.purchaseDate}</p>
+                        <p><strong>גמר חוזה:</strong> ${item.warrantyEnd}</p>
+                        <p><strong>ספק:</strong> ${item.supplier}</p>
+                    </div>
+                </div>
+
+                <div class="mb-8">
+                    <h4 class="font-bold text-slate-700 mb-3 border-b pb-1 italic">היסטוריית טיפולים ותקלות (Logs)</h4>
+                    <table class="w-full text-right text-[11px] bg-slate-50 rounded-xl">
+                        <thead><tr class="text-slate-400"><th>תאריך</th><th>סוג טיפול</th><th>ביצוע</th></tr></thead>
+                        <tbody class="divide-y divide-white">
+                            <tr><td class="p-2">14/02/2025</td><td class="p-2 italic">בדיקת כיול שנתית</td><td class="p-2 text-green-600 font-bold">הושלם</td></tr>
+                            <tr><td class="p-2">02/11/2024</td><td class="p-2 italic">החלפת רכיב חיישן</td><td class="p-2 text-blue-600">בוצע (אחריות)</td></tr>
+                            <tr><td class="p-2">20/05/2024</td><td class="p-2 italic">דיווח על רעש חריג</td><td class="p-2 text-amber-600 italic">במעקב</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+
+                <div class="bg-blue-600 text-white p-6 rounded-2xl mb-8 shadow-xl">
+                    <p class="text-[10px] font-bold opacity-80 uppercase tracking-widest">מסקנת מנוע ההמלצות</p>
+                    <p class="text-xl font-bold italic mb-1">${item.needsAction ? 'נדרש טיפול דחוף' : 'פעילות תקינה'}</p>
+                    <p class="text-xs opacity-90">${item.isCovered ? 'נמצא בכיסוי שירות - עלות תיקון משוערת: 0 ש"ח' : 'מכשיר מחוץ לכיסוי - נדרש אישור תקציבי'}</p>
+                </div>
+
+                <div class="flex gap-4">
+                    <button class="flex-1 bg-blue-600 text-white font-bold py-4 rounded-xl shadow-lg hover:bg-blue-700 transition" onclick="alert('נשלח מייל')">פתח קריאת שירות</button>
+                    <button onclick="closeModal()" class="flex-1 bg-slate-100 text-slate-500 font-bold py-4 rounded-xl">סגור</button>
+                </div>
+            `;
+            document.getElementById('detailModal').classList.add('active');
+        }
+
+        function closeModal() { document.getElementById('detailModal').classList.remove('active'); }
+
+        document.getElementById('searchInput').addEventListener('input', (e) => {
+            const val = e.target.value.toLowerCase();
+            const filtered = allItems.filter(i => i.id.toLowerCase().includes(val) || i.model.toLowerCase().includes(val));
+            renderFullInventoryFiltered(filtered);
+        });
+
+        function renderFullInventoryFiltered(data) {
+            const body = document.getElementById('full-inventory-body');
+            body.innerHTML = data.slice(0, 100).map(item => `
+                <tr class="hover:bg-slate-50 cursor-pointer" onclick="showDetail('${item.id}')">
+                    <td class="px-4 py-2 font-bold">${item.id}</td>
+                    <td class="px-4 py-2">${item.model}</td>
+                    <td class="px-4 py-2 text-slate-500">${item.lab}</td>
+                    <td class="px-4 py-2 font-bold ${item.status === 'תקול' ? 'text-red-500' : 'text-green-500'}">${item.status}</td>
+                </tr>
+            `).join('');
+        }
+    </script>
+</body>
+</html>
