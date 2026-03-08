@@ -3,130 +3,110 @@
 <html lang="he" dir="rtl">
 <head>
     <meta charset="UTF-8">
-    <title>LabPulse Pro | v3.6 Automatic Sync</title>
+    <title>LabPulse Pro v3.8 | Secure Enterprise</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <link href="https://fonts.googleapis.com/css2?family=Assistant:wght@300;400;600;800&display=swap" rel="stylesheet">
     <style>
         body { font-family: 'Assistant', sans-serif; background: #f8fafc; }
         .modal { display: none; } .modal.active { display: flex; }
-        .virtual-scroll { max-height: 500px; overflow-y: auto; }
-        #authOverlay { background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%); z-index: 500; }
-        .sync-active { animation: pulse 2s infinite; }
-        @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.4; } }
+        .virtual-scroll { max-height: 480px; overflow-y: auto; }
+        #authOverlay { background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%); z-index: 1000; }
+        .sync-active { opacity: 0.5; }
     </style>
 </head>
 <body class="text-right">
 
-    <!-- Auth & Sync Settings -->
     <div id="authOverlay" class="fixed inset-0 flex items-center justify-center p-4">
         <div class="bg-white p-10 rounded-[2.5rem] shadow-2xl max-w-sm w-full text-center">
-            <div class="text-6xl mb-4">🔐</div>
-            <h1 class="text-2xl font-black mb-2 text-slate-900">כניסה מאובטחת</h1>
-            <p class="text-slate-500 text-xs mb-6">מערכת מוצפנת. הזן סיסמה לטעינת 4,834 פריטים.</p>
-            <input type="password" id="passInput" placeholder="סיסמה (Sheba2026)" class="w-full border-2 p-3 rounded-xl mb-6 text-center outline-none">
-            
-            <div class="border-t pt-6 mb-6">
-                <p class="text-[10px] font-bold text-blue-600 uppercase tracking-widest mb-4">הגדרות סנכרון GitHub (אופציונלי)</p>
-                <input type="text" id="ghToken" placeholder="GitHub Personal Access Token" class="w-full border p-2 rounded-lg text-xs mb-2 text-center">
-                <input type="text" id="ghRepo" placeholder="username/repository" class="w-full border p-2 rounded-lg text-xs mb-2 text-center">
-                <p class="text-[9px] text-slate-400">הסנכרון יאפשר שמירת שינויים חזרה לענן בזמן אמת.</p>
-            </div>
-            
-            <button onclick="unlock()" class="w-full bg-blue-600 text-white font-black py-4 rounded-xl shadow-lg transition transform hover:scale-105">פתח מערכת וסנכרן</button>
-            <p id="errMsg" class="text-red-500 text-xs mt-4 hidden">סיסמה שגויה או שגיאת חיבור.</p>
+            <div class="text-6xl mb-6">🔒</div>
+            <h1 class="text-2xl font-black mb-2 text-slate-900">LabPulse v3.8 Pro</h1>
+            <input type="password" id="passInput" placeholder="סיסמה (Sheba2026)" class="w-full border-2 p-3 rounded-xl mb-4 text-center">
+            <input type="password" id="ghToken" placeholder="GitHub Fine-grained Token" class="w-full border p-2 rounded-lg text-xs mb-2 text-center">
+            <input type="text" id="ghRepo" placeholder="username/repository" class="w-full border p-2 rounded-lg text-xs mb-6 text-center">
+            <button onclick="unlock()" class="w-full bg-blue-600 text-white font-black py-4 rounded-xl shadow-lg">פתח וסנכרן</button>
+            <p id="errMsg" class="text-red-500 text-[10px] mt-4 hidden">שגיאה בפרטים.</p>
         </div>
     </div>
 
-    <!-- Application -->
     <div id="app" class="hidden">
-        <nav class="bg-slate-900 text-white p-4 sticky top-0 z-50 shadow-xl border-b border-slate-700">
+        <nav class="bg-slate-900 text-white p-4 sticky top-0 z-50 shadow-xl">
             <div class="container mx-auto flex justify-between items-center px-4">
                 <div class="flex items-center gap-4">
-                    <h1 class="text-2xl font-black italic tracking-tighter">LabPulse <span class="text-blue-400 font-light">v3.6 Pro</span></h1>
-                    <div id="syncStatus" class="flex items-center gap-2 text-[10px] bg-slate-800 px-3 py-1 rounded-full text-emerald-400 font-bold border border-emerald-900/50">
-                        <span class="w-2 h-2 bg-emerald-500 rounded-full"></span> מחובר לענן
-                    </div>
+                    <h1 class="text-2xl font-black italic tracking-tighter">LabPulse <span class="text-blue-400 font-light">Pro</span></h1>
+                    <div id="syncIndicator" class="text-[9px] bg-slate-800 px-3 py-1 rounded-full text-emerald-400 font-bold">● ענן מחובר</div>
                 </div>
                 <div class="flex items-center gap-4">
                     <div class="bg-slate-800 px-4 py-1.5 rounded-xl border border-slate-700 flex flex-col text-right">
-                        <span class="text-[9px] text-slate-400 uppercase font-bold">תקציב (₪)</span>
-                        <input type="number" id="budgetLimit" value="80000" onchange="updateUI()" class="bg-transparent font-bold text-emerald-400 outline-none w-28 text-right">
+                        <span class="text-[9px] text-slate-400 font-black uppercase">תקציב (₪)</span>
+                        <input type="number" id="budgetLimit" value="95000" onchange="updateUI()" class="bg-transparent font-black text-emerald-400 outline-none w-24 text-right">
                     </div>
-                    <button onclick="openAddModal()" class="bg-blue-600 hover:bg-blue-700 px-6 py-2 rounded-xl font-black text-sm shadow-lg transition">+ הוסף ציוד</button>
+                    <button onclick="openAddModal()" class="bg-blue-600 px-5 py-2 rounded-xl font-black text-sm shadow-lg">+ הוסף ציוד</button>
                 </div>
             </div>
         </nav>
 
-        <main class="container mx-auto mt-8 px-4 pb-20">
-            <!-- Stats -->
+        <main class="container mx-auto mt-8 px-4 pb-20 text-right">
             <div class="grid grid-cols-1 md:grid-cols-4 gap-6 mb-10 text-center">
-                <div class="bg-white p-6 rounded-2xl shadow-sm border-b-4 border-blue-500"><p class="text-slate-400 text-[10px] font-bold">סה"כ פריטים</p><p id="stat-total" class="text-3xl font-black">--</p></div>
-                <div class="bg-white p-6 rounded-2xl shadow-sm border-b-4 border-rose-600"><p class="text-slate-400 text-[10px] font-bold">חריגים לטיפול</p><p id="stat-faulty" class="text-3xl font-black text-rose-600">--</p></div>
-                <div class="bg-white p-6 rounded-2xl shadow-sm border-b-4 border-emerald-500"><p class="text-slate-400 text-[10px] font-bold">ניצול תקציב</p><p id="stat-budget-use" class="text-3xl font-black text-emerald-600">--</p></div>
-                <div class="bg-white p-6 rounded-2xl shadow-sm border-b-4 border-amber-500"><p class="text-slate-400 text-[10px] font-bold">תחזוקה מצטברת</p><p id="stat-maint-total" class="text-3xl font-black text-amber-600">--</p></div>
+                <div class="bg-white p-6 rounded-2xl shadow-sm border-b-4 border-blue-500 text-center"><p class="text-slate-400 text-[10px] font-black uppercase">סה"כ פריטים</p><p id="stat-total" class="text-3xl font-black italic">--</p></div>
+                <div class="bg-white p-6 rounded-2xl shadow-sm border-b-4 border-rose-600 text-center"><p class="text-slate-400 text-[10px] font-black uppercase">חריגים לטיפול</p><p id="stat-faulty" class="text-3xl font-black text-rose-600 italic">--</p></div>
+                <div class="bg-white p-6 rounded-2xl shadow-sm border-b-4 border-emerald-500 text-center"><p class="text-slate-400 text-[10px] font-black uppercase">ניצול תקציב</p><p id="stat-budget-use" class="text-3xl font-black text-emerald-600 italic">--</p></div>
+                <div class="bg-white p-6 rounded-2xl shadow-sm border-b-4 border-amber-500 text-center"><p class="text-slate-400 text-[10px] font-black uppercase">תחזוקה מצטברת</p><p id="stat-maint-total" class="text-3xl font-black text-amber-600 italic">--</p></div>
             </div>
 
-            <!-- Health Chart -->
-            <div class="bg-white p-8 rounded-[2rem] shadow-md mb-12 border border-slate-200">
-                <h3 class="font-bold mb-6 text-slate-800 border-b pb-2 italic text-lg text-right">בריאות הציוד - פילוח מעבדות</h3>
+            <div class="bg-white p-8 rounded-[2.5rem] shadow-md mb-12 border border-slate-200">
+                <h3 class="font-black mb-6 text-slate-800 border-b pb-4 italic text-lg text-right">בריאות הציוד במעבדות</h3>
                 <div class="chart-container"><canvas id="labChart"></canvas></div>
             </div>
 
-            <!-- AI Engine -->
-            <div class="bg-white rounded-[2rem] shadow-2xl overflow-hidden border-2 border-slate-200 mb-12">
-                <div class="p-5 bg-slate-800 text-white flex justify-between items-center px-8">
-                    <div class="text-right text-right"><h2 class="text-xl font-black italic tracking-tighter">מנוע עדיפויות מבוסס ROI</h2><p class="text-[10px] opacity-70">ניהול תקלות וחידוש חוזים לפי תקציב מאושר</p></div>
-                    <span class="bg-emerald-500 text-white px-3 py-1 rounded-full text-[10px] font-bold shadow">AUTO-SYNC ACTIVE</span>
+            <div class="bg-white rounded-[2.5rem] shadow-2xl overflow-hidden border-2 border-slate-200 mb-12 text-right">
+                <div class="p-6 bg-slate-800 text-white flex justify-between items-center px-10">
+                    <div class="text-right text-right"><h2 class="text-2xl font-black italic tracking-tighter">מנוע עדיפויות ROI</h2><p class="text-xs opacity-70">תעדוף אוטומטי לפי חוזה ותקציב</p></div>
+                    <span class="bg-emerald-500 text-white px-4 py-1 rounded-full text-[10px] font-black shadow uppercase">Auto-Sync On</span>
                 </div>
-                <div class="overflow-x-auto"><table class="w-full text-right text-sm text-right"><thead class="bg-slate-50 font-bold border-b text-slate-500 text-xs italic"><tr><th class="px-6 py-4">עדיפות</th><th class="px-6 py-4">ME</th><th class="px-6 py-4">דגם</th><th class="px-6 py-4">עלות תיקון</th><th class="px-6 py-4">סטטוס תקציב</th><th class="px-6 py-4 text-center">פעולה</th></tr></thead><tbody id="priority-body" class="divide-y divide-slate-100"></tbody></table></div>
+                <div class="overflow-x-auto"><table class="w-full text-right text-sm text-right"><thead class="bg-slate-100 font-black border-b text-slate-500 text-xs italic"><tr><th class="px-6 py-5 text-right">עדיפות</th><th class="px-6 py-5 text-right">ME</th><th class="px-6 py-5 text-right">דגם</th><th class="px-6 py-5 text-right">עלות</th><th class="px-6 py-5 text-right">סטטוס</th><th class="px-6 py-5 text-center">ניהול</th></tr></thead><tbody id="priority-body" class="divide-y divide-slate-100 text-right"></tbody></table></div>
             </div>
 
-            <!-- Fleet List -->
-            <div class="bg-white rounded-2xl shadow-xl border border-slate-200 overflow-hidden">
-                <div class="p-5 border-b bg-slate-50 flex justify-between items-center flex-wrap gap-4 text-right">
-                    <h2 class="font-black text-right text-lg text-right">ניהול מלאי פעיל (Full Fleet)</h2>
-                    <input type="text" id="searchInput" oninput="handleSearch()" placeholder="חפש לפי ME, דגם או מעבדה..." class="border-2 border-slate-200 rounded-xl px-5 py-2 w-full md:w-96 outline-none shadow-sm focus:border-blue-500 transition-all text-right">
+            <div class="bg-white rounded-3xl shadow-xl border border-slate-200 overflow-hidden text-right">
+                <div class="p-6 border-b bg-slate-50 flex justify-between items-center">
+                    <h2 class="font-black text-xl italic tracking-tighter">ניהול מלאי פעיל</h2>
+                    <input type="text" id="searchInput" oninput="handleSearch()" placeholder="חיפוש..." class="border-2 border-slate-200 rounded-2xl px-6 py-3 w-96 outline-none shadow-inner text-right">
                 </div>
-                <div class="virtual-scroll"><table class="w-full text-right text-xs text-right"><thead class="bg-slate-100 sticky top-0 font-black text-slate-600 border-b uppercase"><tr><th class="px-4 py-2">מזהה</th><th class="px-4 py-2">דגם</th><th class="px-4 py-2 text-right">מעבדה</th><th class="px-4 py-2 text-center">סטטוס</th><th class="px-4 py-2 text-center">ניהול</th></tr></thead><tbody id="full-body" class="divide-y divide-slate-50"></tbody></table></div>
+                <div class="virtual-scroll text-right"><table class="w-full text-right text-xs text-right"><thead class="bg-slate-100 sticky top-0 font-black text-slate-600 border-b uppercase"><tr><th class="px-6 py-3 text-right">מזהה</th><th class="px-6 py-3 text-right">דגם</th><th class="px-6 py-3 text-right text-right">מעבדה</th><th class="px-6 py-3 text-center text-center">סטטוס</th><th class="px-6 py-3 text-center">ניהול</th></tr></thead><tbody id="full-body" class="divide-y divide-slate-50 text-right"></tbody></table></div>
             </div>
         </main>
     </div>
 
-    <!-- Add Asset Modal -->
-    <div id="assetModal" class="modal fixed inset-0 bg-slate-900/90 items-center justify-center z-[500] p-4 text-right">
-        <div class="bg-white rounded-[2.5rem] w-full max-w-2xl p-10 relative shadow-2xl text-right border-8 border-slate-100">
-            <h2 class="text-4xl font-black mb-8 border-b pb-4 italic tracking-tighter">הוספת מכשיר חדש</h2>
-            <div class="grid grid-cols-2 gap-6 mb-8">
-                <div><label class="block text-[10px] font-bold text-slate-400 mb-1 uppercase">מספר ME</label><input id="f-id" class="w-full border-2 p-3 rounded-xl text-sm outline-none focus:border-blue-500 transition-all shadow-sm"></div>
-                <div><label class="block text-[10px] font-bold text-slate-400 mb-1 uppercase">דגם</label><input id="f-model" class="w-full border-2 p-3 rounded-xl text-sm outline-none focus:border-blue-500 transition-all shadow-sm"></div>
-                <div><label class="block text-[10px] font-bold text-slate-400 mb-1 uppercase">מעבדה</label><input id="f-lab" class="w-full border-2 p-3 rounded-xl text-sm outline-none focus:border-blue-500 transition-all shadow-sm"></div>
-                <div><label class="block text-[10px] font-bold text-slate-400 mb-1 uppercase">ספק</label><input id="f-supplier" class="w-full border-2 p-3 rounded-xl text-sm outline-none focus:border-blue-500 transition-all shadow-sm"></div>
-                <div><label class="block text-[10px] font-bold text-slate-400 mb-1 uppercase">מק"ט שיבא</label><input id="f-sku" class="w-full border-2 p-3 rounded-xl text-sm outline-none focus:border-blue-500 transition-all shadow-sm"></div>
-                <div><label class="block text-[10px] font-bold text-slate-400 mb-1 uppercase">סיום חוזה שירות</label><input id="f-wEnd" type="date" class="w-full border-2 p-3 rounded-xl text-sm outline-none focus:border-blue-500 transition-all shadow-sm"></div>
+    <!-- Modals -->
+    <div id="assetModal" class="modal fixed inset-0 bg-slate-900/95 items-center justify-center z-[1000] p-4 text-right">
+        <div class="bg-white rounded-[3rem] w-full max-w-3xl p-12 relative shadow-2xl border-8 border-slate-100 text-right">
+            <h2 class="text-4xl font-black mb-8 border-b-4 border-blue-500 pb-4 inline-block tracking-tighter">הוספת נכס חדש</h2>
+            <div class="grid grid-cols-2 gap-8 mb-10 text-right">
+                <div><label class="block text-[11px] font-black text-slate-500 mb-2 uppercase text-right">מספר ME</label><input id="f-id" class="w-full border-2 p-4 rounded-2xl outline-none focus:border-blue-500 shadow-sm text-right"></div>
+                <div><label class="block text-[11px] font-black text-slate-500 mb-2 uppercase text-right">דגם</label><input id="f-model" class="w-full border-2 p-4 rounded-2xl outline-none focus:border-blue-500 shadow-sm text-right"></div>
+                <div><label class="block text-[11px] font-black text-slate-500 mb-2 uppercase text-right">מעבדה</label><input id="f-lab" class="w-full border-2 p-4 rounded-2xl outline-none focus:border-blue-500 shadow-sm text-right"></div>
+                <div><label class="block text-[11px] font-black text-slate-500 mb-2 uppercase text-right">ספק</label><input id="f-supplier" class="w-full border-2 p-4 rounded-2xl outline-none focus:border-blue-500 shadow-sm text-right"></div>
+                <div><label class="block text-[11px] font-black text-slate-500 mb-2 uppercase text-right">מק"ט שיבא</label><input id="f-sku" class="w-full border-2 p-4 rounded-2xl outline-none focus:border-blue-500 shadow-sm text-right"></div>
+                <div><label class="block text-[11px] font-black text-slate-500 mb-2 uppercase text-right">סיום חוזה</label><input id="f-wEnd" type="date" class="w-full border-2 p-4 rounded-2xl outline-none focus:border-blue-500 shadow-sm text-right"></div>
             </div>
-            <div class="flex gap-4">
-                <button onclick="saveAsset()" class="flex-1 bg-blue-600 text-white font-black py-4 rounded-2xl shadow-xl hover:bg-blue-700 transition transform hover:scale-105">צור מכשיר וסנכרן</button>
-                <button onclick="closeModal('assetModal')" class="flex-1 bg-slate-100 py-4 rounded-2xl font-bold">ביטול</button>
-            </div>
+            <div class="flex gap-4"><button onclick="saveAsset()" class="flex-1 bg-blue-600 text-white font-black py-5 rounded-[1.5rem] shadow-2xl hover:bg-blue-700 transition transform hover:scale-105 text-xl tracking-tight">שמור וסנכרן</button><button onclick="closeModal('assetModal')" class="flex-1 bg-slate-100 py-5 rounded-[1.5rem] font-black text-slate-400">ביטול</button></div>
         </div>
     </div>
 
-    <!-- Detail & Maintenance Modal -->
-    <div id="detailModal" class="modal fixed inset-0 bg-slate-900/90 items-center justify-center z-[500] p-4 text-right text-right">
-        <div class="bg-white rounded-[3rem] w-full max-w-4xl p-12 relative shadow-2xl overflow-y-auto max-h-[95vh] border-8 border-slate-100">
-            <button onclick="closeModal('detailModal')" class="absolute top-8 left-8 text-3xl font-light hover:text-red-500 transition-all">✕</button>
+    <div id="detailModal" class="modal fixed inset-0 bg-slate-900/95 items-center justify-center z-[1000] p-4 text-right">
+        <div class="bg-white rounded-[3.5rem] w-full max-w-5xl p-14 relative shadow-2xl overflow-y-auto max-h-[95vh] border-8 border-slate-100 text-right">
+            <button onclick="closeModal('detailModal')" class="absolute top-10 left-10 text-4xl font-light hover:text-red-500">✕</button>
             <div id="detailContent" class="text-right"></div>
             
-            <div class="mt-12 border-t pt-10 text-right">
-                <h3 class="font-black text-2xl mb-6 italic underline decoration-blue-500 decoration-4 underline-offset-8">דיווח טיפול / תיקון חדש</h3>
-                <div class="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6 text-right">
-                    <div><label class="block text-[10px] font-black text-slate-400 mb-1 text-right">תאריך</label><input type="date" id="mDate" class="w-full border-2 p-3 rounded-xl text-xs outline-none focus:border-blue-500"></div>
-                    <div><label class="block text-[10px] font-black text-slate-400 mb-1 text-right">תיאור הפעולה</label><input type="text" id="mDesc" placeholder="מה תוקן?" class="w-full border-2 p-3 rounded-xl text-xs outline-none focus:border-blue-500"></div>
-                    <div><label class="block text-[10px] font-black text-slate-400 mb-1 text-right">חלפים שהוחלפו</label><input type="text" id="mParts" placeholder="אילו פריטים?" class="w-full border-2 p-3 rounded-xl text-xs outline-none focus:border-blue-500"></div>
-                    <div><label class="block text-[10px] font-black text-slate-400 mb-1 text-right">עלות הפעולה (₪)</label><input type="number" id="mCost" placeholder="מחיר" class="w-full border-2 p-3 rounded-xl text-xs outline-none focus:border-blue-500"></div>
+            <div class="mt-12 border-t pt-12 text-right">
+                <h3 class="font-black text-2xl mb-8 italic underline decoration-blue-500 decoration-8 underline-offset-[12px] text-right">דיווח אירוע תחזוקה</h3>
+                <div class="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8 text-right text-right">
+                    <div><label class="block text-[10px] font-black text-slate-400 mb-2 text-right">תאריך</label><input type="date" id="mDate" class="w-full border-2 p-4 rounded-2xl outline-none focus:border-blue-500 text-right"></div>
+                    <div><label class="block text-[10px] font-black text-slate-400 mb-2 text-right">תיאור</label><input type="text" id="mDesc" placeholder="מה בוצע?" class="w-full border-2 p-4 rounded-2xl outline-none focus:border-blue-500 text-right"></div>
+                    <div><label class="block text-[10px] font-black text-slate-400 mb-2 text-right">חלפים</label><input type="text" id="mParts" placeholder="אילו פריטים?" class="w-full border-2 p-4 rounded-2xl outline-none focus:border-blue-500 text-right"></div>
+                    <div><label class="block text-[10px] font-black text-slate-400 mb-2 text-right">עלות (₪)</label><input type="number" id="mCost" placeholder="מחיר" class="w-full border-2 p-4 rounded-2xl outline-none focus:border-blue-500 text-right"></div>
                 </div>
-                <button onclick="saveMaintRecord()" class="w-full md:w-auto bg-emerald-600 hover:bg-emerald-700 text-white font-black px-12 py-4 rounded-2xl shadow-xl transition transform hover:scale-105">שמור טיפול ועדכן סטטוס</button>
+                <button onclick="saveMaintRecord()" class="w-full md:w-auto bg-emerald-600 hover:bg-emerald-700 text-white font-black px-16 py-5 rounded-[1.5rem] shadow-2xl transition transform hover:scale-105 text-lg">שמור וסנכרן ענן</button>
             </div>
         </div>
     </div>
@@ -134,66 +114,57 @@
     <script>
         let assets = [], maint = {}, chart;
         let currentEditingId = null;
-        let GH_CONFIG = { token: '', repo: '' };
+        let GH = { token: '', repo: '' };
 
-        function encrypt(data, pass) {
-            const dataStr = JSON.stringify(data);
-            const cipherBytes = dataStr.split('').map((c, i) => c.charCodeAt(0) ^ pass.charCodeAt(i % pass.length));
-            return btoa(String.fromCharCode(...cipherBytes));
+        function enc(d, p) {
+            const s = JSON.stringify(d);
+            const c = s.split('').map((x, i) => x.charCodeAt(0) ^ p.charCodeAt(i % p.length));
+            return btoa(String.fromCharCode(...c));
         }
 
-        function decrypt(cipher, pass) {
+        function dec(c, p) {
             try {
-                const b = atob(cipher).split('').map(c=>c.charCodeAt(0));
-                const d = b.map((v,i)=>v ^ pass.charCodeAt(i % pass.length));
+                const b = atob(c).split('').map(x=>x.charCodeAt(0));
+                const d = b.map((v,i)=>v ^ p.charCodeAt(i % p.length));
                 return JSON.parse(new TextDecoder().decode(new Uint8Array(d)));
             } catch(e) { return null; }
         }
 
         async function ghSync(path, data) {
-            if (!GH_CONFIG.token || !GH_CONFIG.repo) return false;
-            document.getElementById('syncStatus').classList.add('sync-active');
+            if (!GH.token || !GH.repo) return;
+            const ind = document.getElementById('syncIndicator');
+            ind.classList.add('sync-active'); ind.innerText = "● מסנכרן...";
             try {
-                const url = `https://api.github.com/repos/${GH_CONFIG.repo}/contents/${path}`;
-                const ref = await fetch(url, { headers: { 'Authorization': `token ${GH_CONFIG.token}` } }).then(r=>r.json());
-                const body = {
-                    message: `Update ${path} via LabPulse Manager`,
-                    content: encrypt(data, "Sheba2026"),
-                    sha: ref.sha
-                };
-                await fetch(url, {
-                    method: 'PUT',
-                    headers: { 'Authorization': `token ${GH_CONFIG.token}`, 'Content-Type': 'application/json' },
-                    body: JSON.stringify(body)
-                });
-                document.getElementById('syncStatus').classList.remove('sync-active');
-                return true;
-            } catch(e) { 
-                console.error("Sync failed", e);
-                document.getElementById('syncStatus').innerText = "שגיאת סנכרון";
-                document.getElementById('syncStatus').classList.add('text-red-400');
-                return false;
-            }
+                const url = `https://api.github.com/repos/${GH.repo}/contents/${path}`;
+                const ref = await fetch(url, { headers: { 'Authorization': `token ${GH.token}` } }).then(r=>r.json());
+                const body = { message: `Update ${path}`, content: enc(data, "Sheba2026"), sha: ref.sha };
+                await fetch(url, { method: 'PUT', headers: { 'Authorization': `token ${GH.token}` }, body: JSON.stringify(body) });
+                ind.classList.remove('sync-active'); ind.innerText = "● ענן מחובר";
+            } catch(e) { ind.innerText = "● שגיאת סנכרון"; ind.style.color = 'red'; }
         }
 
         async function unlock() {
             const pass = document.getElementById('passInput').value;
-            GH_CONFIG.token = document.getElementById('ghToken').value;
-            GH_CONFIG.repo = document.getElementById('ghRepo').value;
-
+            GH.token = document.getElementById('ghToken').value;
+            GH.repo = document.getElementById('ghRepo').value;
             try {
                 const aRaw = await fetch('assets.dat').then(r=>r.text());
                 const mRaw = await fetch('maintenance.dat').then(r=>r.text());
-                const aData = decrypt(aRaw, pass);
-                const mData = decrypt(mRaw, pass);
-
-                if (aData && mData) {
-                    assets = aData; maint = mData;
+                const a = dec(aRaw, pass), m = dec(mRaw, pass);
+                if (a && m) {
+                    const local = localStorage.getItem('lp_pro_v38');
+                    if(local) { const l = JSON.parse(local); assets = l.a; maint = l.m; } else { assets = a; maint = m; }
                     document.getElementById('authOverlay').style.display='none';
                     document.getElementById('app').style.display='block';
                     updateUI();
                 } else { document.getElementById('errMsg').classList.remove('hidden'); }
             } catch(e) { alert("שגיאה בטעינת קבצים."); }
+        }
+
+        function resetForms() {
+            ['f-id','f-model','f-lab','f-supplier','f-sku','f-wEnd','mDate','mDesc','mParts','mCost'].forEach(id => {
+                const el = document.getElementById(id); if(el) el.value = '';
+            });
         }
 
         function updateUI() {
@@ -202,8 +173,8 @@
             document.getElementById('stat-faulty').innerText = assets.filter(i=>i.status==='תקול').length;
             let totalM = 0; Object.values(maint).forEach(arr => arr.forEach(ev => totalM += parseFloat(ev.cost||0)));
             document.getElementById('stat-maint-total').innerText = '₪' + totalM.toLocaleString();
-
-            renderPriorities(budget); renderFull(assets.slice(0,100)); renderChart();
+            renderPriorities(budget); renderFullList(assets.slice(0,100)); renderChart();
+            localStorage.setItem('lp_pro_v38', JSON.stringify({a:assets, m:maint}));
         }
 
         function renderPriorities(budget) {
@@ -213,21 +184,22 @@
             body.innerHTML = faulty.slice(0,12).map(i=>{
                 const c = i.isCovered ? 0 : i.repairCost;
                 const ok = (spent + c <= budget); if(ok) spent += c;
-                const cls = i.isCovered ? 'priority-immediate' : (ok ? 'priority-budgeted' : 'priority-pending');
-                return `<tr class="${cls} cursor-pointer hover:opacity-80" onclick="showDetail('${i.id}')"><td class="p-4 font-black">${i.isCovered?'מיידי (שירות)':(ok?'באישור (תקציב)':'ממתין')}</td><td class="p-4 font-black text-blue-900 underline">${i.id}</td><td class="p-4 font-bold">${i.model}</td><td class="p-4 font-black">₪${c.toLocaleString()}</td><td class="p-4"><span class="px-3 py-1 rounded-full text-[10px] font-bold ${ok?'bg-emerald-100 text-emerald-700':'bg-rose-100 text-rose-700'}">${ok?'מאושר לביצוע':'חורג מתקציב'}</span></td><td class="p-4 text-center"><button class="bg-slate-900 text-white px-4 py-2 rounded-xl text-[10px] font-black shadow">טפל</button></td></tr>`;
+                const cls = i.isCovered ? 'priority-1' : (ok ? 'priority-2' : 'priority-3');
+                return `<tr class="${cls} cursor-pointer hover:opacity-80" onclick="showDetail('${i.id}')"><td class="p-5 font-black text-right">${i.isCovered?'מיידי (שירות)':(ok?'מאושר (תקציב)':'ממתין')}</td><td class="p-5 font-black text-blue-900 underline text-right">${i.id}</td><td class="p-5 font-bold text-right">${i.model}</td><td class="p-5 font-black text-slate-800 text-right">₪${c.toLocaleString()}</td><td class="p-5 text-right"><span class="px-3 py-1 rounded-full text-[10px] font-black ${ok?'bg-emerald-100 text-emerald-700':'bg-rose-100 text-rose-700'}">${ok?'במסגרת תקציב':'חורג מתקציב'}</span></td><td class="p-5 text-center text-center"><button class="bg-slate-900 text-white px-4 py-2 rounded-xl text-[10px] font-black shadow-md">נהל</button></td></tr>`;
             }).join('');
             document.getElementById('stat-budget-use').innerText = '₪' + spent.toLocaleString();
         }
 
-        function renderFull(data) {
-            document.getElementById('full-body').innerHTML = data.map(i=>`<tr class="hover:bg-slate-100 cursor-pointer border-b" onclick="showDetail('${i.id}')"><td class="p-4 font-black text-blue-900">${i.id}</td><td class="p-4 font-bold text-slate-700">${i.model}</td><td class="p-4 text-slate-500 font-bold text-right">${i.lab}</td><td class="p-4 text-center"><span class="px-3 py-1 rounded-full font-black text-[10px] ${i.status==='תקול'?'bg-rose-100 text-rose-600':'bg-emerald-100 text-emerald-600'}">${i.status}</span></td><td class="p-4 text-center"><button onclick="event.stopPropagation(); deleteAsset('${i.id}')" class="text-rose-400 hover:text-rose-600">🗑</button></td></tr>`).join('');
+        function renderFullList(data) {
+            const body = document.getElementById('full-body');
+            body.innerHTML = data.map(i=>`<tr class="hover:bg-slate-100 cursor-pointer border-b text-right" onclick="showDetail('${i.id}')"><td class="p-6 text-right font-black text-blue-900">${i.id}</td><td class="p-6 text-right font-bold text-slate-700">${i.model}</td><td class="p-6 text-right text-slate-500 font-bold text-right">${i.lab}</td><td class="p-6 text-right text-center"><span class="px-3 py-1 rounded-full font-black text-[10px] ${i.status==='תקול'?'bg-rose-100 text-rose-600':'bg-emerald-100 text-emerald-600'} uppercase">${i.status}</span></td><td class="p-6 text-right text-center"><button onclick="event.stopPropagation(); deleteAsset('${i.id}')" class="text-rose-400 hover:text-rose-600">🗑</button></td></tr>`).join('');
         }
 
         function renderChart() {
             if(chart) chart.destroy();
             const labCounts = {}; assets.forEach(i => labCounts[i.lab] = (labCounts[i.lab] || 0) + 1);
             const labs = Object.entries(labCounts).sort((a,b)=>b[1]-a[1]).slice(0,10).map(e=>e[0]);
-            chart = new Chart(document.getElementById('labChart'), {
+            chart = new Chart(document.getElementById('labChart').getContext('2d'), {
                 type: 'bar',
                 data: { labels: labs, datasets: [{ label: 'תקין', data: labs.map(l=>assets.filter(i=>i.lab===l && i.status==="תקין").length), backgroundColor: '#10b981', borderRadius: 8 },{ label: 'תקול', data: labs.map(l=>assets.filter(i=>i.lab===l && i.status==="תקול").length), backgroundColor: '#f43f5e', borderRadius: 8 }] },
                 options: { responsive: true, maintainAspectRatio: false, scales: { x: { stacked: true }, y: { stacked: true } }, plugins: { legend: { position: 'bottom', rtl: true } } }
@@ -235,41 +207,16 @@
         }
 
         function showDetail(id) {
-            currentEditingId = id; const i = assets.find(a=>a.id===id);
+            currentEditingId = id; const item = assets.find(a=>a.id===id);
             const logs = maint[id] || [];
-            const logHtml = logs.map(l=>`<div class="flex justify-between border-b py-3 text-xs"><span>${l.date}</span><span>${l.desc} (${l.parts})</span><span class="font-bold text-blue-600">₪${l.cost}</span></div>`).join('') || '<p class="text-xs italic opacity-50 text-right">אין היסטוריה קודמת למכשיר זה.</p>';
-            document.getElementById('detailContent').innerHTML = `
-                <div class="border-b-8 border-slate-100 pb-6 mb-8 text-right"><h2 class="text-5xl font-black text-slate-900 tracking-tighter text-right">${i.id}</h2><p class="text-3xl text-slate-400 font-bold italic text-right">${i.model}</p></div>
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-8 mb-10 text-right">
-                    <div class="bg-slate-50 p-8 rounded-[2.5rem] border shadow-inner text-right">
-                        <p class="text-blue-500 font-black mb-4 italic tracking-widest uppercase text-[10px] text-right">מידע תפעולי ולוגיסטי</p>
-                        <p class="mb-2 text-lg text-right"><strong>מחלקה:</strong> ${i.lab}</p>
-                        <p class="mb-2 text-lg text-right"><strong>מק"ט שיבא:</strong> <span class="bg-blue-100 px-2 font-bold rounded">${i.sku}</span></p>
-                        <p class="text-right"><strong>ספק שירות:</strong> ${i.supplier}</p>
-                    </div>
-                    <div class="bg-slate-900 text-white p-8 rounded-[2.5rem] shadow-2xl text-right">
-                        <p class="text-blue-400 font-black mb-4 italic uppercase text-[10px] text-right">ניתוח ROI וסטטוס</p>
-                        <p class="text-3xl font-black italic text-right">מצב: <span class="${i.status==='תקול'?'text-rose-400':'text-emerald-400'}">${i.status}</span></p>
-                        <p class="mt-4 text-xs font-bold text-slate-400 uppercase text-right">כיסוי חוזי:</p>
-                        <p class="text-lg opacity-90 text-right">${i.isCovered ? '✅ בכיסוי שירות מלא' : '❌ ללא כיסוי פעיל'}</p>
-                    </div>
-                </div>
-                <div class="bg-slate-50 p-8 rounded-[2rem] border mb-10 text-right">
-                    <p class="text-slate-400 font-black mb-4 uppercase text-[10px] tracking-widest text-right">יומן תחזוקה היסטורי (Audit Trail)</p>
-                    <div class="max-h-60 overflow-y-auto space-y-1 text-right">${logHtml}</div>
-                </div>
-            `;
+            const logHtml = logs.map(l=>`<div class="flex justify-between border-b py-3 text-xs text-right"><span>${l.date}</span><span>${l.desc} (${l.parts})</span><span class="font-bold text-blue-600 text-right">₪${l.cost}</span></div>`).join('') || '<p class="text-xs italic opacity-50 text-right">אין היסטוריה קודמת.</p>';
+            document.getElementById('detailContent').innerHTML = `<div class="border-b-8 border-slate-100 pb-8 mb-10 text-right"><h2 class="text-6xl font-black text-slate-900 tracking-tighter text-right">${item.id}</h2><p class="text-3xl text-slate-400 font-bold italic text-right">${item.model} | ${item.mfr}</p></div><div class="grid grid-cols-1 md:grid-cols-2 gap-10 mb-12 text-right"><div class="bg-slate-50 p-10 rounded-[3rem] border shadow-inner text-right"><p class="text-blue-500 font-black mb-4 italic tracking-widest uppercase text-[11px] text-right">לוגיסטיקה ומזהים</p><p class="mb-2 text-xl text-right"><strong>מחלקה:</strong> ${item.lab}</p><p class="mb-2 text-xl text-right"><strong>מק"ט שיבא:</strong> <span class="bg-blue-100 px-2 font-black rounded">${item.sku}</span></p><p class="text-xl text-right"><strong>ספק:</strong> ${item.supplier}</p></div><div class="bg-slate-900 text-white p-10 rounded-[3rem] shadow-2xl text-right"><p class="text-blue-400 font-black mb-4 italic uppercase text-[11px] text-right">ניתוח בריאות הנכס</p><p class="text-4xl font-black italic text-right">מצב: <span class="${item.status==='תקול'?'text-rose-400':'text-emerald-400'}">${item.status}</span></p><p class="mt-6 text-sm font-bold text-slate-500 uppercase text-right">סטטוס חוזה:</p><p class="text-xl opacity-90 text-right font-bold text-right">${item.isCovered ? '✅ מכוסה בחוזה שירות' : '❌ מחוץ למסגרת השירות'}</p></div></div><div class="bg-slate-50 p-10 rounded-[3rem] border mb-12 text-right"><p class="text-slate-400 font-black mb-6 uppercase text-[11px] tracking-widest text-right">יומן תחזוקה היסטורי (Audit Trail)</p><div class="max-h-72 overflow-y-auto space-y-1 text-right">${logHtml}</div></div>`;
             document.getElementById('detailModal').classList.add('active');
         }
 
         async function saveAsset() {
             const n = { id: document.getElementById('f-id').value, sn: "NEW-SN", model: document.getElementById('f-model').value, lab: document.getElementById('f-lab').value, supplier: document.getElementById('f-supplier').value, sku: document.getElementById('f-sku').value, wEnd: document.getElementById('f-wEnd').value, pDate: "2024", status: "תקין", repairCost: 0, isCovered: true };
-            if(n.id && n.model) {
-                assets.unshift(n);
-                updateUI();
-                closeModal('assetModal');
-                await ghSync('assets.dat', assets);
-            }
+            if(n.id && n.model) { assets.unshift(n); updateUI(); closeModal('assetModal'); await ghSync('assets.dat', assets); resetForms(); }
         }
 
         async function saveMaintRecord() {
@@ -279,22 +226,14 @@
             maint[currentEditingId].push(ev);
             const item = assets.find(a=>a.id===currentEditingId);
             item.status="תקין"; item.repairCost=0;
-            updateUI(); showDetail(currentEditingId);
-            await ghSync('maintenance.dat', maint);
-            await ghSync('assets.dat', assets);
+            updateUI(); showDetail(currentEditingId); resetForms();
+            await ghSync('maintenance.dat', maint); await ghSync('assets.dat', assets);
         }
 
-        async function deleteAsset(id) {
-            if(confirm("מחיקת " + id + "?")) {
-                assets = assets.filter(a=>a.id!==id);
-                updateUI();
-                await ghSync('assets.dat', assets);
-            }
-        }
-
-        function openAddModal() { document.getElementById('assetModal').classList.add('active'); }
-        function closeModal(m) { document.getElementById(m).classList.remove('active'); }
-        function handleSearch() { const t = document.getElementById('searchInput').value.toLowerCase(); renderFull(assets.filter(a=>a.id.toLowerCase().includes(t)||a.model.toLowerCase().includes(t)||a.lab.toLowerCase().includes(t)).slice(0,100)); }
+        async function deleteAsset(id) { if(confirm("מחיקת " + id + "?")) { assets = assets.filter(a=>a.id!==id); updateUI(); await ghSync('assets.dat', assets); } }
+        function openAddModal() { resetForms(); document.getElementById('assetModal').classList.add('active'); }
+        function closeModal(m) { resetForms(); document.getElementById(m).classList.remove('active'); }
+        function handleSearch() { const val = document.getElementById('searchInput').value.toLowerCase(); renderFullList(assets.filter(i=>i.id.toLowerCase().includes(val)||i.model.toLowerCase().includes(val)||i.lab.toLowerCase().includes(val)).slice(0,150)); }
     </script>
 </body>
 </html>
