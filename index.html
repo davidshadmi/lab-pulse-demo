@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>LabPulse Pro v4.0 | Mobile Fix</title>
+    <title>LabPulse Demo | Enterprise Security</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
@@ -11,9 +11,8 @@
         @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&display=swap');
         body { font-family: 'Inter', sans-serif; background: #f8fafc; touch-action: manipulation; }
         .glass { background: rgba(255, 255, 255, 0.95); backdrop-filter: blur(10px); }
-        .sync-loading { animation: pulse 2s infinite; }
-        @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: .5; } }
         input, button { min-height: 48px; }
+        .hidden { display: none !important; }
     </style>
 </head>
 <body class="antialiased text-slate-900">
@@ -24,22 +23,22 @@
                 <div class="inline-flex items-center justify-center w-14 h-14 bg-blue-600 rounded-2xl mb-3 text-white text-xl shadow-lg">
                     <i class="fas fa-microscope"></i>
                 </div>
-                <h1 class="text-xl font-bold text-slate-800">LabPulse Pro v4.0</h1>
+                <h1 class="text-xl font-bold text-slate-800">LabPulse Demo v1.4</h1>
                 <p class="text-slate-500 text-xs mt-1 font-medium">Enterprise Cloud Sync</p>
             </div>
             
             <div class="space-y-4">
                 <div>
-                    <label class="block text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1 mr-1">GitHub Fine-grained Token</label>
+                    <label class="block text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1 mr-1">GitHub Token</label>
                     <input type="password" id="ghToken" class="w-full px-4 py-2 rounded-xl border border-slate-200 focus:ring-2 focus:ring-blue-500 outline-none transition-all bg-slate-50/50 text-sm" placeholder="github_pat_...">
                 </div>
                 <div>
-                    <label class="block text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1 mr-1">Repository Path (user/repo)</label>
+                    <label class="block text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1 mr-1">Repo Path (user/repo)</label>
                     <input type="text" id="ghRepo" class="w-full px-4 py-2 rounded-xl border border-slate-200 focus:ring-2 focus:ring-blue-500 outline-none transition-all bg-slate-50/50 text-sm" placeholder="davidshadmi/lab-pulse-demo">
                 </div>
                 <div class="flex items-center gap-2 py-1">
                     <input type="checkbox" id="rememberMe" class="w-5 h-5 text-blue-600 rounded border-slate-300">
-                    <label for="rememberMe" class="text-sm text-slate-600 font-medium">זכור אותי במכשיר זה</label>
+                    <label for="rememberMe" class="text-sm text-slate-600 font-medium">זכור אותי</label>
                 </div>
                 <button onclick="unlock(this)" class="w-full bg-slate-900 hover:bg-black text-white py-3 rounded-xl font-bold transition-all shadow-lg active:scale-95">כניסה למערכת</button>
                 <div id="errMsg" class="hidden p-3 rounded-lg bg-rose-50 border border-rose-100 text-rose-600 text-[11px] font-bold text-center leading-tight"></div>
@@ -48,49 +47,33 @@
     </div>
 
     <div id="app" class="hidden min-h-screen">
-        <header class="glass sticky top-0 z-40 border-b border-slate-200 px-4 py-3">
-            <div class="max-w-7xl mx-auto flex justify-between items-center">
-                <div class="flex items-center gap-2">
-                    <div class="w-8 h-8 bg-blue-600 rounded-lg flex items-center justify-center text-white text-sm"><i class="fas fa-pulse"></i></div>
-                    <div>
-                        <h2 class="font-bold text-sm leading-tight">LabPulse</h2>
-                        <div class="flex items-center gap-1">
-                            <span id="syncDot" class="w-1.5 h-1.5 rounded-full bg-emerald-500"></span>
-                            <span id="syncText" class="text-[8px] text-slate-400 font-bold uppercase">מחובר לענן</span>
-                        </div>
-                    </div>
-                </div>
-                <div class="flex gap-1">
-                    <button onclick="showSection('dashboard')" class="p-2 px-3 rounded-lg hover:bg-slate-100 text-slate-600 font-bold text-xs">דשבורד</button>
-                    <button onclick="showSection('inventory')" class="p-2 px-3 rounded-lg hover:bg-slate-100 text-slate-600 font-bold text-xs">ציוד</button>
-                    <button onclick="logout()" class="p-2 px-3 text-rose-500 font-bold text-xs"><i class="fas fa-power-off"></i></button>
-                </div>
+        <header class="glass sticky top-0 z-40 border-b border-slate-200 px-4 py-3 flex justify-between items-center">
+            <h2 class="font-bold text-sm">LabPulse Pro</h2>
+            <div class="flex gap-2">
+                <button onclick="showSection('dashboard')" class="text-xs font-bold px-2">דשבורד</button>
+                <button onclick="showSection('inventory')" class="text-xs font-bold px-2">ציוד</button>
+                <button onclick="logout()" class="text-rose-500"><i class="fas fa-power-off"></i></button>
             </div>
         </header>
 
-        <main class="max-w-7xl mx-auto p-4 pb-20">
-            <section id="dashboardSection" class="space-y-4">
-                <div class="glass p-5 rounded-3xl border border-slate-200 shadow-sm">
-                    <h3 class="text-slate-400 text-[10px] font-bold uppercase tracking-widest mb-3">תעדוף תיקונים (ROI)</h3>
+        <main class="p-4">
+            <div id="dashboardSection">
+                <div class="glass p-5 rounded-3xl border border-slate-200 shadow-sm mb-4">
+                    <h3 class="text-[10px] font-bold text-slate-400 uppercase mb-3">תעדוף (ROI)</h3>
                     <div id="priorityList" class="space-y-3"></div>
                 </div>
-                <div class="glass p-5 rounded-3xl border border-slate-200 shadow-sm">
-                    <h3 class="text-slate-400 text-[10px] font-bold uppercase tracking-widest mb-3">סטטיסטיקה</h3>
-                    <canvas id="mainChart" height="220"></canvas>
-                </div>
-            </section>
-            <section id="inventorySection" class="hidden">
-                <div class="glass rounded-3xl border border-slate-200 shadow-sm overflow-hidden">
-                    <div id="inventoryMobileList" class="divide-y divide-slate-100"></div>
-                </div>
-            </section>
+                <canvas id="mainChart" height="200"></canvas>
+            </div>
+            <div id="inventorySection" class="hidden">
+                <div id="inventoryMobileList" class="divide-y divide-slate-100 bg-white rounded-3xl border shadow-sm"></div>
+            </div>
         </main>
     </div>
 
-    <div id="detailModal" class="fixed inset-0 z-50 hidden flex items-end sm:items-center justify-center bg-slate-900/60 p-0 sm:p-4">
-        <div class="glass w-full max-w-2xl rounded-t-3xl sm:rounded-3xl shadow-2xl p-6 border border-white/20 max-h-[90vh] overflow-y-auto">
+    <div id="detailModal" class="fixed inset-0 z-50 hidden flex items-end justify-center bg-slate-900/60">
+        <div class="glass w-full rounded-t-3xl p-6 max-h-[90vh] overflow-y-auto">
             <div id="modalContent"></div>
-            <button onclick="closeModal()" class="mt-6 w-full py-4 bg-slate-100 rounded-2xl font-bold text-slate-600">סגור</button>
+            <button onclick="closeModal()" class="mt-6 w-full py-4 bg-slate-100 rounded-2xl font-bold">סגור</button>
         </div>
     </div>
 
@@ -99,33 +82,26 @@
         let GH = { token: '', repo: '' };
         const PASS = "Sheba2026";
 
-        // פונקציית פענוח חזקה יותר עם תמיכה בתיקון קידוד כפול
+        // פונקציית פענוח מקורית - תואמת לכל הקבצים הקיימים שלך
         function dec(c, p) {
             try {
-                // ניקוי תווים לבנים ורווחים ש-GitHub מוסיף לפעמים
-                c = c.replace(/\s/g, '');
-                let s = decodeURIComponent(escape(atob(c)));
-                let r = "";
-                for (let i = 0; i < s.length; i++) {
-                    r += String.fromCharCode(s.charCodeAt(i) ^ p.charCodeAt(i % p.length));
+                // שלב 1: ניקוי תווים לא חוקיים ו-Base64
+                const cleanBase64 = c.replace(/\s/g, '');
+                const rawString = atob(cleanBase64);
+                
+                // שלב 2: XOR עם הסיסמה
+                let xorResult = "";
+                for (let i = 0; i < rawString.length; i++) {
+                    xorResult += String.fromCharCode(rawString.charCodeAt(i) ^ p.charCodeAt(i % p.length));
                 }
-                let data = JSON.parse(r);
-                return data;
-            } catch (e) { 
-                // Fallback: אם הפענוח נכשל, אולי המידע ב-GitHub נשמר בטעות בקידוד כפול
-                try {
-                    return dec(atob(c.replace(/\s/g, '')), p);
-                } catch(e2) { return null; }
+                
+                // שלב 3: פענוח תמיכה בעברית (UTF-8)
+                const decoded = decodeURIComponent(escape(xorResult));
+                return JSON.parse(decoded);
+            } catch (e) {
+                console.error("Decryption error:", e);
+                return null;
             }
-        }
-
-        function enc(d, p) {
-            let s = JSON.stringify(d);
-            let r = "";
-            for (let i = 0; i < s.length; i++) {
-                r += String.fromCharCode(s.charCodeAt(i) ^ p.charCodeAt(i % p.length));
-            }
-            return btoa(unescape(encodeURIComponent(r)));
         }
 
         async function fetchFromGH(path) {
@@ -133,35 +109,31 @@
             const r = await fetch(url, {
                 headers: { 'Authorization': `Bearer ${GH.token}`, 'Accept': 'application/vnd.github.v3+json' }
             });
-            if (!r.ok) {
-                if(r.status === 401) throw new Error("GitHub Token לא תקין");
-                if(r.status === 404) throw new Error(`הקובץ ${path} לא נמצא במאגר`);
-                throw new Error("שגיאת תקשורת עם GitHub");
-            }
+            if (!r.ok) throw new Error(r.status === 404 ? `קובץ ${path} חסר` : "שגיאת GitHub");
+            
             const j = await r.json();
-            // GitHub מחזיר תוכן ב-Base64, אנחנו מפענחים אותו ומעבירים לפונקציית ה-dec שלנו
-            const content = j.content.replace(/\n/g, '');
-            const decoded = dec(content, PASS);
-            if (!decoded) throw new Error(`כשל בפענוח הנתונים מקובץ ${path}`);
-            return decoded;
+            // ב-GitHub התוכן מגיע כ-Base64 של המחרוזת המוצפנת שלנו
+            const encryptedContent = atob(j.content.replace(/\s/g, ''));
+            const data = dec(encryptedContent, PASS);
+            if (!data) throw new Error(`כשל בפענוח ${path}`);
+            return data;
         }
 
         async function unlock(btn) {
             const errDiv = document.getElementById('errMsg');
             errDiv.classList.add('hidden');
-            const originalText = btn.innerText;
-
+            
             GH.token = document.getElementById('ghToken').value.trim();
             GH.repo = document.getElementById('ghRepo').value.trim();
             const remember = document.getElementById('rememberMe').checked;
 
             if(!GH.token || !GH.repo) {
-                errDiv.innerText = "נא להזין את כל פרטי הגישה";
+                errDiv.innerText = "נא להזין את כל הפרטים";
                 errDiv.classList.remove('hidden');
                 return;
             }
 
-            btn.innerText = "מתחבר לענן...";
+            btn.innerText = "מתחבר...";
             btn.disabled = true;
 
             try {
@@ -173,22 +145,25 @@
                     localStorage.setItem('lp_gh_repo_v4', GH.repo);
                     localStorage.setItem('lp_remember_v4', 'true');
                 } else {
-                    localStorage.clear();
+                    localStorage.removeItem('lp_remember_v4');
                 }
 
                 document.getElementById('authOverlay').classList.add('hidden');
                 document.getElementById('app').classList.remove('hidden');
                 updateUI();
             } catch (e) {
-                btn.innerText = originalText;
+                btn.innerText = "כניסה למערכת";
                 btn.disabled = false;
                 errDiv.innerText = e.message;
                 errDiv.classList.remove('hidden');
             }
         }
 
-        function logout() { localStorage.removeItem('lp_remember_v4'); location.reload(); }
-        function updateUI() { renderPriorities(); renderInventory(); renderChart(); }
+        function updateUI() {
+            renderPriorities();
+            renderInventory();
+            renderChart();
+        }
 
         function renderPriorities() {
             const list = document.getElementById('priorityList');
@@ -200,23 +175,20 @@
             }).sort((a, b) => b.score - a.score);
 
             list.innerHTML = sorted.map(a => `
-                <div class="flex items-center justify-between p-4 rounded-2xl bg-white border border-slate-100 shadow-sm active:bg-slate-50" onclick="showDetail('${a.id}')">
+                <div class="p-4 bg-white border rounded-2xl flex justify-between items-center" onclick="showDetail('${a.id}')">
                     <div class="flex items-center gap-3">
-                        <div class="w-1.5 h-10 rounded-full ${a.critical ? 'bg-rose-500' : 'bg-amber-400'}"></div>
-                        <div><p class="font-bold text-sm">${a.name}</p><p class="text-[10px] text-slate-400 font-bold uppercase">${a.dept}</p></div>
+                        <div class="w-1.5 h-8 rounded-full ${a.critical ? 'bg-rose-500' : 'bg-amber-400'}"></div>
+                        <div><p class="font-bold text-sm">${a.name}</p><p class="text-[10px] text-slate-400">${a.dept}</p></div>
                     </div>
-                    <i class="fas fa-chevron-left text-slate-300 text-xs"></i>
-                </div>`).join('') || '<p class="text-center text-slate-400 text-xs py-4 italic">אין תקלות פתוחות</p>';
+                    <i class="fas fa-chevron-left text-slate-300"></i>
+                </div>`).join('') || '<p class="text-xs text-slate-400 text-center py-4">אין תקלות</p>';
         }
 
         function renderInventory() {
             document.getElementById('inventoryMobileList').innerHTML = assets.map(a => `
-                <div class="p-4 flex justify-between items-center active:bg-slate-50" onclick="showDetail('${a.id}')">
-                    <div><p class="font-bold text-sm text-slate-800">${a.name}</p><p class="text-[10px] text-slate-400 font-mono uppercase">${a.id} | ${a.dept}</p></div>
-                    <span class="px-2 py-1 rounded-lg text-[9px] font-black uppercase ${
-                        a.status === 'תקין' ? 'bg-emerald-50 text-emerald-600' : 
-                        a.status === 'תיקון' ? 'bg-rose-50 text-rose-600' : 'bg-slate-100 text-slate-500'
-                    }">${a.status}</span>
+                <div class="p-4 flex justify-between items-center" onclick="showDetail('${a.id}')">
+                    <div><p class="font-bold text-sm">${a.name}</p><p class="text-[10px] text-slate-400">${a.id}</p></div>
+                    <span class="text-[9px] font-black uppercase px-2 py-1 rounded ${a.status === 'תקין' ? 'bg-emerald-50 text-emerald-600' : 'bg-rose-50 text-rose-600'}">${a.status}</span>
                 </div>`).join('');
         }
 
@@ -230,8 +202,8 @@
             if(chart) chart.destroy();
             chart = new Chart(ctx, {
                 type: 'bar',
-                data: { labels: Object.keys(data), datasets: [{ label: 'תקלות', data: Object.values(data), backgroundColor: '#2563eb', borderRadius: 6 }] },
-                options: { maintainAspectRatio: false, plugins: { legend: { display: false } }, scales: { y: { beginAtZero: true } } }
+                data: { labels: Object.keys(data), datasets: [{ label: 'תקלות', data: Object.values(data), backgroundColor: '#2563eb', borderRadius: 4 }] },
+                options: { maintainAspectRatio: false, plugins: { legend: { display: false } } }
             });
         }
 
@@ -239,12 +211,14 @@
             const a = assets.find(x => x.id === id);
             const logs = maint[id] || [];
             document.getElementById('modalContent').innerHTML = `
-                <div class="mb-6"><h2 class="text-xl font-bold">${a.name}</h2><p class="text-slate-400 font-mono text-xs">${a.id}</p></div>
-                <div class="grid grid-cols-2 gap-3 mb-6">
-                    <div class="p-3 bg-slate-50 rounded-2xl border border-slate-100"><p class="text-[9px] font-bold text-slate-400 uppercase">ערך</p><p class="text-lg font-bold">₪${a.value.toLocaleString()}</p></div>
-                    <div class="p-3 bg-slate-50 rounded-2xl border border-slate-100"><p class="text-[9px] font-bold text-slate-400 uppercase">מחלקה</p><p class="text-lg font-bold text-blue-600">${a.dept}</p></div>
+                <h2 class="text-xl font-bold mb-1">${a.name}</h2>
+                <p class="text-xs text-slate-400 mb-6">${a.id} | ${a.dept}</p>
+                <div class="grid grid-cols-2 gap-4 mb-6">
+                    <div class="p-3 bg-slate-50 rounded-2xl"><p class="text-[9px] font-bold text-slate-400">ערך</p><p class="font-bold">₪${a.value.toLocaleString()}</p></div>
+                    <div class="p-3 bg-slate-50 rounded-2xl"><p class="text-[9px] font-bold text-slate-400">חוזה</p><p class="font-bold text-emerald-600">${a.contract || 'ללא'}</p></div>
                 </div>
-                <div class="space-y-2">${logs.map(l => `<div class="p-3 bg-white border border-slate-100 rounded-xl shadow-sm"><div class="flex justify-between font-bold text-xs"><p>${l.action}</p><p>₪${l.cost}</p></div><p class="text-[10px] text-slate-400">${l.date}</p></div>`).join('') || '<p class="text-xs italic text-slate-400">אין היסטוריה</p>'}</div>`;
+                <h3 class="font-bold text-sm mb-3">היסטוריה</h3>
+                <div class="space-y-2">${logs.map(l => `<div class="p-3 border rounded-xl text-xs"><div class="flex justify-between font-bold"><p>${l.action}</p><p>₪${l.cost}</p></div><p class="text-slate-400">${l.date}</p></div>`).join('') || '<p class="text-xs italic text-slate-400">אין נתונים</p>'}</div>`;
             document.getElementById('detailModal').classList.remove('hidden');
         }
 
@@ -261,6 +235,8 @@
                 document.getElementById('rememberMe').checked = true;
             }
         };
+
+        function logout() { localStorage.removeItem('lp_remember_v4'); location.reload(); }
     </script>
 </body>
 </html>
