@@ -2,132 +2,258 @@
 <html lang="he" dir="rtl">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>LabPulse Pro v4.0.2</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>LabPulse Pro v4.0 | Enterprise Security & Sync</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
     <style>
-        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;700&display=swap');
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&display=swap');
         body { font-family: 'Inter', sans-serif; background: #f8fafc; }
-        .glass { background: rgba(255, 255, 255, 0.95); backdrop-filter: blur(10px); border: 1px solid rgba(255,255,255,0.2); }
-        .hidden { display: none !important; }
+        .glass { background: rgba(255, 255, 255, 0.95); backdrop-filter: blur(10px); }
+        .card-shadow { box-shadow: 0 4px 20px -2px rgba(0,0,0,0.05); }
+        .sync-loading { animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite; }
+        @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: .5; } }
     </style>
 </head>
 <body class="antialiased text-slate-900">
 
-    <div id="authOverlay" class="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/40 backdrop-blur-sm p-4">
-        <div class="glass w-full max-w-md p-6 rounded-3xl shadow-2xl">
-            <div class="text-center mb-6">
-                <div class="w-14 h-14 bg-blue-600 rounded-2xl mx-auto flex items-center justify-center text-white text-2xl shadow-lg mb-4">
+    <div id="authOverlay" class="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/40 backdrop-blur-sm">
+        <div class="glass w-full max-w-md p-8 rounded-3xl card-shadow border border-white/20">
+            <div class="text-center mb-8">
+                <div class="inline-flex items-center justify-center w-16 h-16 bg-blue-600 rounded-2xl mb-4 text-white text-2xl shadow-lg shadow-blue-200">
                     <i class="fas fa-microscope"></i>
                 </div>
-                <h1 class="text-xl font-bold">LabPulse Pro v4.0</h1>
-                <p class="text-slate-500 text-xs">Mobile Cloud Sync</p>
+                <h1 class="text-2xl font-bold text-slate-800">LabPulse Pro v4.0</h1>
+                <p class="text-slate-500 text-sm mt-1">Enterprise Security & Cloud Sync</p>
             </div>
+            
             <div class="space-y-4">
-                <input type="password" id="ghToken" class="w-full px-4 py-3 rounded-xl border bg-slate-50/50" placeholder="GitHub Token">
-                <input type="text" id="ghRepo" class="w-full px-4 py-3 rounded-xl border bg-slate-50/50" placeholder="username/repo">
-                <div class="flex items-center gap-2">
-                    <input type="checkbox" id="rememberMe" checked class="w-5 h-5 text-blue-600">
-                    <label for="rememberMe" class="text-sm">זכור אותי במכשיר זה</label>
+                <div>
+                    <label class="block text-xs font-semibold text-slate-500 uppercase tracking-wider mb-1 mr-1">GitHub Fine-grained Token</label>
+                    <input type="password" id="ghToken" class="w-full px-4 py-3 rounded-xl border border-slate-200 focus:ring-2 focus:ring-blue-500 outline-none transition-all bg-slate-50/50" placeholder="github_pat_...">
                 </div>
-                <button onclick="unlock(this)" class="w-full bg-slate-900 text-white py-3 rounded-xl font-bold">כניסה</button>
-                <div id="errMsg" class="hidden p-3 rounded-lg bg-rose-50 text-rose-600 text-[11px] font-bold text-center"></div>
+                <div>
+                    <label class="block text-xs font-semibold text-slate-500 uppercase tracking-wider mb-1 mr-1">Repository Path</label>
+                    <input type="text" id="ghRepo" class="w-full px-4 py-3 rounded-xl border border-slate-200 focus:ring-2 focus:ring-blue-500 outline-none transition-all bg-slate-50/50" placeholder="username/repo">
+                </div>
+                <div class="flex items-center gap-2 py-2">
+                    <input type="checkbox" id="rememberMe" class="w-4 h-4 text-blue-600 rounded border-slate-300 focus:ring-blue-500">
+                    <label for="rememberMe" class="text-sm text-slate-600">זכור אותי במכשיר זה</label>
+                </div>
+                <button onclick="unlock()" class="w-full bg-slate-900 hover:bg-black text-white py-4 rounded-xl font-semibold transition-all shadow-xl active:scale-[0.98]">כניסה למערכת</button>
+                <p id="errMsg" class="text-center text-rose-500 text-sm font-medium hidden"></p>
             </div>
         </div>
     </div>
 
     <div id="app" class="hidden min-h-screen">
-        <header class="glass sticky top-0 z-40 px-4 py-3 flex justify-between items-center shadow-sm">
-            <h2 class="font-bold text-sm">LabPulse Pro</h2>
-            <div class="flex gap-4">
-                <button onclick="showSection('dashboard')" class="text-xs font-bold">דשבורד</button>
-                <button onclick="showSection('inventory')" class="text-xs font-bold">ציוד</button>
-                <button onclick="logout()" class="text-rose-500"><i class="fas fa-power-off"></i></button>
+        <header class="glass sticky top-0 z-40 border-b border-slate-200 px-6 py-4">
+            <div class="max-w-7xl mx-auto flex justify-between items-center">
+                <div class="flex items-center gap-3">
+                    <div class="w-10 h-10 bg-blue-600 rounded-xl flex items-center justify-center text-white shadow-md">
+                        <i class="fas fa-pulse"></i>
+                    </div>
+                    <div>
+                        <h2 class="font-bold text-lg leading-tight">LabPulse Pro</h2>
+                        <div class="flex items-center gap-2">
+                            <span id="syncDot" class="w-2 h-2 rounded-full bg-emerald-500"></span>
+                            <span id="syncText" class="text-[10px] text-slate-400 font-medium uppercase tracking-tighter">ענן מסונכרן</span>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="flex gap-2">
+                    <button onclick="showSection('dashboard')" class="p-2 px-4 rounded-lg hover:bg-slate-100 text-slate-600 font-medium text-sm transition-colors">דשבורד</button>
+                    <button onclick="showSection('inventory')" class="p-2 px-4 rounded-lg hover:bg-slate-100 text-slate-600 font-medium text-sm transition-colors">ציוד</button>
+                    <button onclick="logout()" class="p-2 px-4 rounded-lg text-rose-500 hover:bg-rose-50 font-medium text-sm transition-colors">ניתוק</button>
+                </div>
             </div>
         </header>
 
-        <main class="p-4">
-            <div id="dashboardSection">
-                <div id="priorityList" class="space-y-3 mb-6"></div>
-                <div class="glass p-4 rounded-2xl"><canvas id="mainChart" height="200"></canvas></div>
-            </div>
-            <div id="inventorySection" class="hidden">
-                <div id="inventoryList" class="divide-y bg-white rounded-2xl border overflow-hidden"></div>
-            </div>
+        <main class="max-w-7xl mx-auto p-6">
+            <section id="dashboardSection" class="space-y-6">
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                    <div class="glass p-6 rounded-3xl border border-slate-200 card-shadow">
+                        <h3 class="text-slate-500 text-xs font-bold uppercase tracking-widest mb-4">תעדוף תיקונים (ROI)</h3>
+                        <div id="priorityList" class="space-y-4"></div>
+                    </div>
+                    <div class="md:col-span-2 glass p-6 rounded-3xl border border-slate-200 card-shadow">
+                        <h3 class="text-slate-500 text-xs font-bold uppercase tracking-widest mb-4">פילוח תקלות שנתי</h3>
+                        <canvas id="mainChart" height="200"></canvas>
+                    </div>
+                </div>
+            </section>
+
+            <section id="inventorySection" class="hidden">
+                <div class="glass rounded-3xl border border-slate-200 card-shadow overflow-hidden">
+                    <table class="w-full text-right border-collapse">
+                        <thead class="bg-slate-50 border-b border-slate-200">
+                            <tr>
+                                <th class="p-4 text-xs font-bold text-slate-500 uppercase">מזהה</th>
+                                <th class="p-4 text-xs font-bold text-slate-500 uppercase">מכשיר</th>
+                                <th class="p-4 text-xs font-bold text-slate-500 uppercase">מחלקה</th>
+                                <th class="p-4 text-xs font-bold text-slate-500 uppercase">סטטוס</th>
+                                <th class="p-4 text-xs font-bold text-slate-500 uppercase">פעולות</th>
+                            </tr>
+                        </thead>
+                        <tbody id="inventoryBody" class="divide-y divide-slate-100"></tbody>
+                    </table>
+                </div>
+            </section>
         </main>
     </div>
 
-    <div id="detailModal" class="fixed inset-0 z-50 hidden flex items-end justify-center bg-slate-900/60">
-        <div class="glass w-full rounded-t-3xl p-6 max-h-[90vh] overflow-y-auto">
+    <div id="detailModal" class="fixed inset-0 z-50 hidden flex items-center justify-center bg-slate-900/60 p-4">
+        <div class="glass w-full max-w-2xl max-h-[90vh] overflow-y-auto rounded-3xl shadow-2xl p-8 border border-white/20">
             <div id="modalContent"></div>
-            <button onclick="closeModal()" class="mt-6 w-full py-4 bg-slate-100 rounded-2xl font-bold">סגור</button>
+            <button onclick="closeModal()" class="mt-8 w-full py-3 bg-slate-100 hover:bg-slate-200 rounded-xl font-bold transition-colors">סגור</button>
         </div>
     </div>
 
     <script>
         let assets = [], maint = {}, chart;
         let GH = { token: '', repo: '' };
-        const PASS = "Sheba2026";
 
-        // פונקציית פענוח אוניברסלית התומכת בעברית ובקידוד GitHub
-        function decrypt(base64, password) {
+        function enc(d, p) {
             try {
-                // ניקוי רווחים מיותרים מ-GitHub
-                const binary = atob(base64.replace(/\s/g, ''));
-                let decrypted = "";
-                for (let i = 0; i < binary.length; i++) {
-                    decrypted += String.fromCharCode(binary.charCodeAt(i) ^ password.charCodeAt(i % password.length));
-                }
-                // פענוח UTF-8 (תמיכה בעברית)
-                const utf8 = decodeURIComponent(escape(decrypted));
-                return JSON.parse(utf8);
-            } catch (e) {
-                console.error("Decryption failed", e);
-                return null;
+                const bytes = new TextEncoder().encode(JSON.stringify(d));
+                const encrypted = bytes.map((v, i) => v ^ p.charCodeAt(i % p.length));
+                return btoa(String.fromCharCode(...encrypted));
+            } catch(e) { return ""; }
+        }
+
+        function dec(c, p) {
+            if (!c || c.trim() === "") return null;
+            try {
+                const encrypted = Uint8Array.from(atob(c.replace(/\s/g, '')), x => x.charCodeAt(0));
+                const decrypted = encrypted.map((v, i) => v ^ p.charCodeAt(i % p.length));
+                const decodedString = new TextDecoder().decode(decrypted);
+                return JSON.parse(decodedString);
+            } catch(e) { 
+                console.error("Decryption failed:", e);
+                return null; 
             }
         }
 
-        async function fetchFile(path) {
-            const url = `https://api.github.com/repos/${GH.repo}/contents/${path}`;
-            const res = await fetch(url, { headers: { 'Authorization': `Bearer ${GH.token}` } });
-            if (!res.ok) throw new Error(`קובץ ${path} לא נמצא`);
-            const json = await res.json();
-            // GitHub כבר מקודד את הקובץ ב-Base64 בתוך שדה ה-content
-            const data = decrypt(json.content, PASS);
-            if (!data) throw new Error(`כשל בפענוח ${path}. בדוק את תוכן הקובץ ב-GitHub.`);
-            return data;
-        }
-
-        async function unlock(btn) {
-            const errDiv = document.getElementById('errMsg');
-            errDiv.classList.add('hidden');
-            GH.token = document.getElementById('ghToken').value.trim();
-            GH.repo = document.getElementById('ghRepo').value.trim();
+        async function ghSync(path, data) {
+            if (!GH.token || !GH.repo) return;
+            const indText = document.getElementById('syncText');
+            const indDot = document.getElementById('syncDot');
             
-            btn.innerText = "טוען...";
-            btn.disabled = true;
+            indText.innerText = "מעדכן ענן...";
+            indDot.classList.add('sync-loading');
+            indDot.classList.replace('bg-emerald-500', 'bg-amber-500');
 
             try {
-                assets = await fetchFile('assets.dat');
-                maint = await fetchFile('maintenance.dat');
+                const url = `https://api.github.com/repos/${GH.repo}/contents/${path}`;
+                const headers = { 
+                    'Authorization': `Bearer ${GH.token}`, 
+                    'Accept': 'application/vnd.github.v3+json'
+                };
 
-                if (document.getElementById('rememberMe').checked) {
+                const refRes = await fetch(url, { headers });
+                let sha = null;
+                if (refRes.ok) {
+                    const refData = await refRes.json();
+                    sha = refData.sha;
+                }
+
+                const content = enc(data, "Sheba2026");
+                const body = { 
+                    message: `LabPulse Auto-Sync: ${path}`, 
+                    content: content,
+                    sha: sha 
+                };
+
+                const res = await fetch(url, {
+                    method: 'PUT',
+                    headers: { ...headers, 'Content-Type': 'application/json' },
+                    body: JSON.stringify(body)
+                });
+
+                if(!res.ok) throw new Error("Sync Failed");
+
+                indText.innerText = "ענן מסונכרן";
+                indDot.classList.remove('sync-loading');
+                indDot.classList.replace('bg-amber-500', 'bg-emerald-500');
+            } catch(e) {
+                indText.innerText = "שגיאת סנכרון";
+                indDot.classList.replace('bg-amber-500', 'bg-rose-500');
+            }
+        }
+
+        async function loadData() {
+            const pass = "Sheba2026";
+            
+            // 1. Try Local Fetch
+            try {
+                const aRaw = await fetch('assets.dat').then(r => r.ok ? r.text() : null);
+                const mRaw = await fetch('maintenance.dat').then(r => r.ok ? r.text() : null);
+                if (aRaw && mRaw) {
+                    const a = dec(aRaw, pass);
+                    const m = dec(mRaw, pass);
+                    if (a && m) return { a, m };
+                }
+            } catch (e) {}
+
+            // 2. GitHub Fallback
+            if (GH.token && GH.repo) {
+                try {
+                    const fetchGH = async (p) => {
+                        const r = await fetch(`https://api.github.com/repos/${GH.repo}/contents/${p}`, {
+                            headers: { 'Authorization': `Bearer ${GH.token}` }
+                        });
+                        if (!r.ok) return null;
+                        const j = await r.json();
+                        return dec(j.content, pass);
+                    };
+                    const a = await fetchGH('assets.dat');
+                    const m = await fetchGH('maintenance.dat');
+                    if (a && m) return { a, m };
+                } catch (e) { console.error("Cloud load failed", e); }
+            }
+            return null;
+        }
+
+        async function unlock() {
+            const err = document.getElementById('errMsg');
+            const btn = document.querySelector('#authOverlay button');
+            err.classList.add('hidden');
+            
+            GH.token = document.getElementById('ghToken').value.trim();
+            GH.repo = document.getElementById('ghRepo').value.trim();
+            const remember = document.getElementById('rememberMe').checked;
+
+            btn.innerText = "מתחבר...";
+            const data = await loadData();
+            
+            if (data && Array.isArray(data.a)) {
+                assets = data.a;
+                maint = data.m;
+                
+                if (remember) {
                     localStorage.setItem('lp_gh_token_v4', GH.token);
                     localStorage.setItem('lp_gh_repo_v4', GH.repo);
                     localStorage.setItem('lp_remember_v4', 'true');
+                } else {
+                    localStorage.removeItem('lp_gh_token_v4');
+                    localStorage.removeItem('lp_gh_repo_v4');
+                    localStorage.removeItem('lp_remember_v4');
                 }
 
                 document.getElementById('authOverlay').classList.add('hidden');
                 document.getElementById('app').classList.remove('hidden');
                 updateUI();
-            } catch (e) {
-                btn.innerText = "כניסה";
-                btn.disabled = false;
-                errDiv.innerText = e.message;
-                errDiv.classList.remove('hidden');
+            } else {
+                btn.innerText = "כניסה למערכת";
+                err.innerText = "שגיאת נתונים - בדוק חיבור, הרשאות או תקינות קבצים";
+                err.classList.remove('hidden');
             }
+        }
+
+        function logout() {
+            location.reload();
         }
 
         function updateUI() {
@@ -138,62 +264,132 @@
 
         function renderPriorities() {
             const list = document.getElementById('priorityList');
-            const repairItems = assets.filter(a => a.status === "תיקון").slice(0, 10);
-            list.innerHTML = repairItems.map(a => `
-                <div class="p-4 bg-white border rounded-2xl flex justify-between items-center" onclick="showDetail('${a.id}')">
+            const sorted = assets
+                .filter(a => a.status === "תיקון")
+                .map(a => {
+                    const logs = maint[a.id] || [];
+                    const cost = logs.reduce((sum, l) => sum + (l.cost || 0), 0);
+                    const score = (cost / (a.value || 1)) * (a.critical ? 1.5 : 1);
+                    return { ...a, score };
+                })
+                .sort((a, b) => b.score - a.score);
+
+            list.innerHTML = sorted.map(a => `
+                <div class="flex items-center justify-between p-3 rounded-2xl bg-slate-50 border border-slate-100">
                     <div class="flex items-center gap-3">
-                        <div class="w-1.5 h-8 rounded-full ${a.critical ? 'bg-rose-500' : 'bg-amber-400'}"></div>
-                        <div><p class="font-bold text-sm">${a.name}</p><p class="text-[10px] text-slate-400">${a.dept}</p></div>
+                        <div class="w-2 h-8 rounded-full ${a.critical ? 'bg-rose-500' : 'bg-amber-400'}"></div>
+                        <div>
+                            <p class="font-bold text-sm">${a.name}</p>
+                            <p class="text-[10px] text-slate-400 uppercase font-bold">${a.dept}</p>
+                        </div>
                     </div>
-                    <i class="fas fa-chevron-left text-slate-300"></i>
-                </div>`).join('') || '<p class="text-xs text-center text-slate-400">אין מכשירים בתיקון</p>';
+                    <button onclick="showDetail('${a.id}')" class="text-blue-600 hover:text-blue-800"><i class="fas fa-chevron-left"></i></button>
+                </div>
+            `).join('') || '<p class="text-center text-slate-400 text-sm italic py-4">אין מכשירים הממתינים לתיקון</p>';
         }
 
         function renderInventory() {
-            document.getElementById('inventoryList').innerHTML = assets.slice(0, 100).map(a => `
-                <div class="p-4 flex justify-between items-center" onclick="showDetail('${a.id}')">
-                    <div><p class="font-bold text-sm">${a.name}</p><p class="text-[10px] text-slate-400">${a.id}</p></div>
-                    <span class="text-[9px] font-black uppercase px-2 py-1 rounded ${a.status === 'תקין' ? 'bg-emerald-50 text-emerald-600' : 'bg-rose-50 text-rose-600'}">${a.status}</span>
-                </div>`).join('');
+            const body = document.getElementById('inventoryBody');
+            body.innerHTML = assets.map(a => `
+                <tr class="hover:bg-slate-50/50 transition-colors">
+                    <td class="p-4 text-xs font-mono text-slate-400">${a.id}</td>
+                    <td class="p-4 font-bold text-sm">${a.name}</td>
+                    <td class="p-4 text-sm text-slate-600">${a.dept}</td>
+                    <td class="p-4">
+                        <span class="px-3 py-1 rounded-full text-[10px] font-bold uppercase ${
+                            a.status === 'תקין' ? 'bg-emerald-100 text-emerald-700' : 
+                            a.status === 'תיקון' ? 'bg-rose-100 text-rose-700' : 'bg-slate-100 text-slate-700'
+                        }">${a.status}</span>
+                    </td>
+                    <td class="p-4">
+                        <button onclick="showDetail('${a.id}')" class="text-slate-400 hover:text-blue-600 transition-colors"><i class="fas fa-eye"></i></button>
+                    </td>
+                </tr>
+            `).join('');
         }
 
         function renderChart() {
             const ctx = document.getElementById('mainChart').getContext('2d');
-            const years = ["2023", "2024", "2025"];
+            const counts = {};
+            Object.values(maint).flat().forEach(l => {
+                const year = new Date(l.date).getFullYear();
+                counts[year] = (counts[year] || 0) + 1;
+            });
+
             if(chart) chart.destroy();
             chart = new Chart(ctx, {
-                type: 'bar',
-                data: { labels: years, datasets: [{ label: 'תקלות', data: [12, 19, 3], backgroundColor: '#2563eb' }] },
-                options: { responsive: true, maintainAspectRatio: false }
+                type: 'line',
+                data: {
+                    labels: Object.keys(counts),
+                    datasets: [{
+                        label: 'מספר תקלות בשנה',
+                        data: Object.values(counts),
+                        borderColor: '#2563eb',
+                        tension: 0.4,
+                        fill: true,
+                        backgroundColor: 'rgba(37, 99, 235, 0.05)'
+                    }]
+                },
+                options: { plugins: { legend: { display: false } }, scales: { y: { beginAtZero: true } } }
             });
         }
 
         function showDetail(id) {
             const a = assets.find(x => x.id === id);
             const logs = maint[id] || [];
-            document.getElementById('modalContent').innerHTML = `
-                <h2 class="text-xl font-bold mb-1">${a.name}</h2>
-                <p class="text-xs text-slate-400 mb-6">מזהה: ${a.id} | דגם: ${a.model}</p>
-                <div class="grid grid-cols-2 gap-4 mb-6">
-                    <div class="p-3 bg-slate-50 rounded-2xl"><p class="text-[9px] font-bold text-slate-400">מחלקה</p><p class="font-bold">${a.dept}</p></div>
-                    <div class="p-3 bg-slate-50 rounded-2xl"><p class="text-[9px] font-bold text-slate-400">ספק</p><p class="font-bold text-blue-600">${a.contract}</p></div>
+            const modal = document.getElementById('detailModal');
+            const content = document.getElementById('modalContent');
+            
+            content.innerHTML = `
+                <div class="flex justify-between items-start mb-6 text-right">
+                    <div>
+                        <h2 class="text-2xl font-bold">${a.name}</h2>
+                        <p class="text-slate-400 font-mono text-sm">${a.id} | ${a.model}</p>
+                    </div>
+                    <span class="px-4 py-1 bg-blue-50 text-blue-600 rounded-full text-xs font-bold">${a.dept}</span>
                 </div>
-                <h3 class="font-bold text-sm mb-3">היסטוריית טיפולים</h3>
-                <div class="space-y-2">${logs.map(l => `<div class="p-3 border rounded-xl text-xs"><div class="flex justify-between font-bold"><p>${l.action}</p><p>₪${l.cost}</p></div><p class="text-slate-400">${l.date}</p></div>`).join('') || '<p class="text-xs italic text-slate-400">אין היסטוריה</p>'}</div>`;
-            document.getElementById('detailModal').classList.remove('hidden');
+                
+                <div class="grid grid-cols-2 gap-4 mb-8 text-right">
+                    <div class="p-4 bg-slate-50 rounded-2xl border border-slate-100">
+                        <p class="text-[10px] font-bold text-slate-400 uppercase mb-1">ערך כינון</p>
+                        <p class="text-xl font-bold">₪${(a.value || 0).toLocaleString()}</p>
+                    </div>
+                    <div class="p-4 bg-slate-50 rounded-2xl border border-slate-100">
+                        <p class="text-[10px] font-bold text-slate-400 uppercase mb-1">חוזה שירות</p>
+                        <p class="text-xl font-bold text-emerald-600">${a.contract || 'ללא'}</p>
+                    </div>
+                </div>
+
+                <h3 class="font-bold text-lg mb-4 text-right">היסטוריית תחזוקה</h3>
+                <div class="space-y-3 text-right">
+                    ${logs.map(l => `
+                        <div class="flex justify-between p-4 bg-white border border-slate-100 rounded-xl shadow-sm">
+                            <div>
+                                <p class="font-bold text-sm">${l.action}</p>
+                                <p class="text-xs text-slate-400">${l.date} | ${l.technician}</p>
+                            </div>
+                            <p class="font-bold text-blue-600">₪${(l.cost || 0).toLocaleString()}</p>
+                        </div>
+                    `).join('') || '<p class="text-slate-400 italic">אין היסטוריה זמינה</p>'}
+                </div>
+            `;
+            modal.classList.remove('hidden');
         }
 
-        function closeModal() { document.getElementById('detailModal').classList.add('hidden'); }
+        function closeModal() {
+            document.getElementById('detailModal').classList.add('hidden');
+        }
+
         function showSection(name) {
             document.getElementById('dashboardSection').classList.toggle('hidden', name !== 'dashboard');
             document.getElementById('inventorySection').classList.toggle('hidden', name !== 'inventory');
         }
-        function logout() { localStorage.removeItem('lp_remember_v4'); location.reload(); }
 
         window.onload = () => {
             if(localStorage.getItem('lp_remember_v4') === 'true') {
                 document.getElementById('ghToken').value = localStorage.getItem('lp_gh_token_v4') || '';
                 document.getElementById('ghRepo').value = localStorage.getItem('lp_gh_repo_v4') || '';
+                document.getElementById('rememberMe').checked = true;
             }
         };
     </script>
