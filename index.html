@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>LabPulse Pro v4.1 | Enterprise Security & Sync</title>
+    <title>LabPulse Pro v4.0 | Enterprise Security & Sync</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
@@ -114,83 +114,70 @@
     <script>
         let assets = [], maint = {}, chart;
         let GH = { token: '', repo: '' };
+        const PASS = "Sheba2026";
 
-        // Helper: Robust Encoding with Unicode support
+        // Restore Original Compatible Encoding
         function enc(d, p) {
-            const bytes = new TextEncoder().encode(JSON.stringify(d));
-            const encrypted = bytes.map((v, i) => v ^ p.charCodeAt(i % p.length));
-            return btoa(String.fromCharCode(...encrypted));
+            let s = JSON.stringify(d);
+            let r = "";
+            for (let i = 0; i < s.length; i++) {
+                r += String.fromCharCode(s.charCodeAt(i) ^ p.charCodeAt(i % p.length));
+            }
+            return btoa(unescape(encodeURIComponent(r)));
         }
 
         function dec(c, p) {
             try {
-                const encrypted = Uint8Array.from(atob(c), x => x.charCodeAt(0));
-                const decrypted = encrypted.map((v, i) => v ^ p.charCodeAt(i % p.length));
-                return JSON.parse(new TextDecoder().decode(decrypted));
-            } catch(e) { return null; }
+                let s = decodeURIComponent(escape(atob(c)));
+                let r = "";
+                for (let i = 0; i < s.length; i++) {
+                    r += String.fromCharCode(s.charCodeAt(i) ^ p.charCodeAt(i % p.length));
+                }
+                return JSON.parse(r);
+            } catch (e) { return null; }
         }
 
         async function ghSync(path, data) {
             if (!GH.token || !GH.repo) return;
             const indText = document.getElementById('syncText');
             const indDot = document.getElementById('syncDot');
-            
             indText.innerText = "מעדכן ענן...";
             indDot.classList.add('sync-loading');
-            indDot.classList.replace('bg-emerald-500', 'bg-amber-500');
 
             try {
                 const url = `https://api.github.com/repos/${GH.repo}/contents/${path}`;
-                const headers = { 
-                    'Authorization': `Bearer ${GH.token}`, 
-                    'Accept': 'application/vnd.github.v3+json'
-                };
-
-                // 1. Get SHA (handles non-existent files via 404)
+                const headers = { 'Authorization': `Bearer ${GH.token}`, 'Accept': 'application/vnd.github.v3+json' };
                 const refRes = await fetch(url, { headers });
                 let sha = null;
-                if (refRes.ok) {
-                    const refData = await refRes.json();
-                    sha = refData.sha;
-                }
-
-                // 2. Prepare Data (Removed utob to fix double-encoding)
-                const content = enc(data, "Sheba2026");
-                const body = { 
-                    message: `LabPulse Auto-Update: ${path}`, 
-                    content: content,
-                    sha: sha 
-                };
-
+                if (refRes.ok) { sha = (await refRes.json()).sha; }
                 const res = await fetch(url, {
                     method: 'PUT',
                     headers: { ...headers, 'Content-Type': 'application/json' },
-                    body: JSON.stringify(body)
+                    body: JSON.stringify({ message: `Sync: ${path}`, content: enc(data, PASS), sha: sha })
                 });
-
-                if(!res.ok) throw new Error("Sync Failed");
-
+                if(!res.ok) throw new Error();
                 indText.innerText = "ענן מסונכרן";
                 indDot.classList.remove('sync-loading');
                 indDot.classList.replace('bg-amber-500', 'bg-emerald-500');
             } catch(e) {
-                console.error(e);
                 indText.innerText = "שגיאת סנכרון";
                 indDot.classList.replace('bg-amber-500', 'bg-rose-500');
             }
         }
 
         async function loadData() {
-            const pass = "Sheba2026";
-            
-            // Try Local Fetch first
+            // 1. Try Local Files
             try {
                 const aRaw = await fetch('assets.dat').then(r => r.ok ? r.text() : null);
                 const mRaw = await fetch('maintenance.dat').then(r => r.ok ? r.text() : null);
-                if (aRaw && mRaw) return { a: dec(aRaw, pass), m: dec(mRaw, pass) };
+                if (aRaw && mRaw) {
+                    const a = dec(aRaw, PASS);
+                    const m = dec(mRaw, PASS);
+                    if (a && m) return { a, m };
+                }
             } catch (e) {}
 
-            // Fallback: GitHub Sync (Essential for home testing)
+            // 2. Fallback to GitHub (strip API base64 layer first)
             if (GH.token && GH.repo) {
                 try {
                     const fetchGH = async (p) => {
@@ -199,13 +186,13 @@
                         });
                         if (!r.ok) return null;
                         const j = await r.json();
-                        // Content from API is base64 encoded by GitHub, but we also encrypted our content inside that
-                        return dec(j.content.replace(/\n/g, ''), pass);
+                        // Important: atob converts the API response back to the file's original encrypted string
+                        return dec(atob(j.content.replace(/\s/g, '')), PASS);
                     };
                     const a = await fetchGH('assets.dat');
                     const m = await fetchGH('maintenance.dat');
                     if (a && m) return { a, m };
-                } catch (e) { console.error("Cloud fetch failed", e); }
+                } catch (e) { console.error("Cloud load error", e); }
             }
             return null;
         }
@@ -214,19 +201,16 @@
             const err = document.getElementById('errMsg');
             const btn = document.querySelector('#authOverlay button');
             err.classList.add('hidden');
-            
             GH.token = document.getElementById('ghToken').value.trim();
             GH.repo = document.getElementById('ghRepo').value.trim();
             const remember = document.getElementById('rememberMe').checked;
 
-            btn.innerText = "מתחבר...";
+            btn.innerText = "טוען נתונים...";
             const data = await loadData();
             
             if (data) {
                 assets = data.a;
                 maint = data.m;
-                
-                // Fix: Persistent saving logic
                 if (remember) {
                     localStorage.setItem('lp_gh_token_v4', GH.token);
                     localStorage.setItem('lp_gh_repo_v4', GH.repo);
@@ -236,7 +220,6 @@
                     localStorage.removeItem('lp_gh_repo_v4');
                     localStorage.removeItem('lp_remember_v4');
                 }
-
                 document.getElementById('authOverlay').classList.add('hidden');
                 document.getElementById('app').classList.remove('hidden');
                 updateUI();
@@ -246,61 +229,40 @@
             }
         }
 
-        function logout() {
-            location.reload();
-        }
-
-        function updateUI() {
-            renderPriorities();
-            renderInventory();
-            renderChart();
-        }
+        function logout() { location.reload(); }
+        function updateUI() { renderPriorities(); renderInventory(); renderChart(); }
 
         function renderPriorities() {
             const list = document.getElementById('priorityList');
-            // ROI Calculation: (Repair Cost / Replacement Value) * Importance
-            const sorted = assets
-                .filter(a => a.status === "תיקון")
-                .map(a => {
-                    const logs = maint[a.id] || [];
-                    const cost = logs.reduce((sum, l) => sum + (l.cost || 0), 0);
-                    const score = (cost / a.value) * (a.critical ? 1.5 : 1);
-                    return { ...a, score };
-                })
-                .sort((a, b) => b.score - a.score);
+            const sorted = assets.filter(a => a.status === "תיקון").map(a => {
+                const logs = maint[a.id] || [];
+                const cost = logs.reduce((sum, l) => sum + (l.cost || 0), 0);
+                const score = (cost / a.value) * (a.critical ? 1.5 : 1);
+                return { ...a, score };
+            }).sort((a, b) => b.score - a.score);
 
             list.innerHTML = sorted.map(a => `
                 <div class="flex items-center justify-between p-3 rounded-2xl bg-slate-50 border border-slate-100">
                     <div class="flex items-center gap-3">
                         <div class="w-2 h-8 rounded-full ${a.critical ? 'bg-rose-500' : 'bg-amber-400'}"></div>
-                        <div>
-                            <p class="font-bold text-sm">${a.name}</p>
-                            <p class="text-[10px] text-slate-400 uppercase font-bold">${a.dept}</p>
-                        </div>
+                        <div><p class="font-bold text-sm">${a.name}</p><p class="text-[10px] text-slate-400 uppercase font-bold">${a.dept}</p></div>
                     </div>
                     <button onclick="showDetail('${a.id}')" class="text-blue-600 hover:text-blue-800"><i class="fas fa-chevron-left"></i></button>
-                </div>
-            `).join('') || '<p class="text-center text-slate-400 text-sm italic py-4">אין מכשירים הממתינים לתיקון</p>';
+                </div>`).join('') || '<p class="text-center text-slate-400 text-sm italic py-4">אין מכשירים הממתינים לתיקון</p>';
         }
 
         function renderInventory() {
-            const body = document.getElementById('inventoryBody');
-            body.innerHTML = assets.map(a => `
+            document.getElementById('inventoryBody').innerHTML = assets.map(a => `
                 <tr class="hover:bg-slate-50/50 transition-colors">
                     <td class="p-4 text-xs font-mono text-slate-400">${a.id}</td>
                     <td class="p-4 font-bold text-sm">${a.name}</td>
                     <td class="p-4 text-sm text-slate-600">${a.dept}</td>
-                    <td class="p-4">
-                        <span class="px-3 py-1 rounded-full text-[10px] font-bold uppercase ${
-                            a.status === 'תקין' ? 'bg-emerald-100 text-emerald-700' : 
-                            a.status === 'תיקון' ? 'bg-rose-100 text-rose-700' : 'bg-slate-100 text-slate-700'
-                        }">${a.status}</span>
-                    </td>
-                    <td class="p-4">
-                        <button onclick="showDetail('${a.id}')" class="text-slate-400 hover:text-blue-600 transition-colors"><i class="fas fa-eye"></i></button>
-                    </td>
-                </tr>
-            `).join('');
+                    <td class="p-4"><span class="px-3 py-1 rounded-full text-[10px] font-bold uppercase ${
+                        a.status === 'תקין' ? 'bg-emerald-100 text-emerald-700' : 
+                        a.status === 'תיקון' ? 'bg-rose-100 text-rose-700' : 'bg-slate-100 text-slate-700'
+                    }">${a.status}</span></td>
+                    <td class="p-4"><button onclick="showDetail('${a.id}')" class="text-slate-400 hover:text-blue-600 transition-colors"><i class="fas fa-eye"></i></button></td>
+                </tr>`).join('');
         }
 
         function renderChart() {
@@ -310,21 +272,10 @@
                 const year = new Date(l.date).getFullYear();
                 data[year] = (data[year] || 0) + 1;
             });
-
             if(chart) chart.destroy();
             chart = new Chart(ctx, {
                 type: 'line',
-                data: {
-                    labels: Object.keys(data),
-                    datasets: [{
-                        label: 'מספר תקלות בשנה',
-                        data: Object.values(data),
-                        borderColor: '#2563eb',
-                        tension: 0.4,
-                        fill: true,
-                        backgroundColor: 'rgba(37, 99, 235, 0.05)'
-                    }]
-                },
+                data: { labels: Object.keys(data), datasets: [{ label: 'תקלות', data: Object.values(data), borderColor: '#2563eb', tension: 0.4, fill: true, backgroundColor: 'rgba(37, 99, 235, 0.05)' }] },
                 options: { plugins: { legend: { display: false } }, scales: { y: { beginAtZero: true } } }
             });
         }
@@ -332,56 +283,31 @@
         function showDetail(id) {
             const a = assets.find(x => x.id === id);
             const logs = maint[id] || [];
-            const modal = document.getElementById('detailModal');
-            const content = document.getElementById('modalContent');
-            
-            content.innerHTML = `
+            document.getElementById('modalContent').innerHTML = `
                 <div class="flex justify-between items-start mb-6">
-                    <div>
-                        <h2 class="text-2xl font-bold">${a.name}</h2>
-                        <p class="text-slate-400 font-mono text-sm">${a.id} | ${a.model}</p>
-                    </div>
+                    <div><h2 class="text-2xl font-bold">${a.name}</h2><p class="text-slate-400 font-mono text-sm">${a.id} | ${a.model}</p></div>
                     <span class="px-4 py-1 bg-blue-50 text-blue-600 rounded-full text-xs font-bold">${a.dept}</span>
                 </div>
-                
                 <div class="grid grid-cols-2 gap-4 mb-8">
-                    <div class="p-4 bg-slate-50 rounded-2xl border border-slate-100">
-                        <p class="text-[10px] font-bold text-slate-400 uppercase mb-1">ערך כינון</p>
-                        <p class="text-xl font-bold">₪${a.value.toLocaleString()}</p>
-                    </div>
-                    <div class="p-4 bg-slate-50 rounded-2xl border border-slate-100">
-                        <p class="text-[10px] font-bold text-slate-400 uppercase mb-1">חוזה שירות</p>
-                        <p class="text-xl font-bold text-emerald-600">${a.contract || 'ללא'}</p>
-                    </div>
+                    <div class="p-4 bg-slate-50 rounded-2xl border border-slate-100"><p class="text-[10px] font-bold text-slate-400 uppercase mb-1">ערך כינון</p><p class="text-xl font-bold">₪${a.value.toLocaleString()}</p></div>
+                    <div class="p-4 bg-slate-50 rounded-2xl border border-slate-100"><p class="text-[10px] font-bold text-slate-400 uppercase mb-1">חוזה שירות</p><p class="text-xl font-bold text-emerald-600">${a.contract || 'ללא'}</p></div>
                 </div>
-
                 <h3 class="font-bold text-lg mb-4">היסטוריית תחזוקה</h3>
-                <div class="space-y-3">
-                    ${logs.map(l => `
-                        <div class="flex justify-between p-4 bg-white border border-slate-100 rounded-xl shadow-sm">
-                            <div>
-                                <p class="font-bold text-sm">${l.action}</p>
-                                <p class="text-xs text-slate-400">${l.date} | ${l.technician}</p>
-                            </div>
-                            <p class="font-bold text-blue-600">₪${l.cost.toLocaleString()}</p>
-                        </div>
-                    `).join('') || '<p class="text-slate-400 italic">אין היסטוריה זמינה</p>'}
-                </div>
-            `;
-            modal.classList.remove('hidden');
+                <div class="space-y-3">${logs.map(l => `
+                    <div class="flex justify-between p-4 bg-white border border-slate-100 rounded-xl shadow-sm">
+                        <div><p class="font-bold text-sm">${l.action}</p><p class="text-xs text-slate-400">${l.date} | ${l.technician}</p></div>
+                        <p class="font-bold text-blue-600">₪${l.cost.toLocaleString()}</p>
+                    </div>`).join('') || '<p class="text-slate-400 italic">אין היסטוריה זמינה</p>'}</div>`;
+            document.getElementById('detailModal').classList.remove('hidden');
         }
 
-        function closeModal() {
-            document.getElementById('detailModal').classList.add('hidden');
-        }
-
+        function closeModal() { document.getElementById('detailModal').classList.add('hidden'); }
         function showSection(name) {
             document.getElementById('dashboardSection').classList.toggle('hidden', name !== 'dashboard');
             document.getElementById('inventorySection').classList.toggle('hidden', name !== 'inventory');
         }
 
         window.onload = () => {
-            // Fix: Added explicit string check for the "remember" flag
             if(localStorage.getItem('lp_remember_v4') === 'true') {
                 document.getElementById('ghToken').value = localStorage.getItem('lp_gh_token_v4') || '';
                 document.getElementById('ghRepo').value = localStorage.getItem('lp_gh_repo_v4') || '';
