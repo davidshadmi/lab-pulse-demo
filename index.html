@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>LabPulse Demo | Enterprise Security</title>
+    <title>LabPulse Demo | Fixed</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
@@ -12,7 +12,6 @@
         body { font-family: 'Inter', sans-serif; background: #f8fafc; touch-action: manipulation; }
         .glass { background: rgba(255, 255, 255, 0.95); backdrop-filter: blur(10px); }
         input, button { min-height: 48px; }
-        .hidden { display: none !important; }
     </style>
 </head>
 <body class="antialiased text-slate-900">
@@ -23,8 +22,8 @@
                 <div class="inline-flex items-center justify-center w-14 h-14 bg-blue-600 rounded-2xl mb-3 text-white text-xl shadow-lg">
                     <i class="fas fa-microscope"></i>
                 </div>
-                <h1 class="text-xl font-bold text-slate-800">LabPulse Demo v1.4</h1>
-                <p class="text-slate-500 text-xs mt-1 font-medium">Enterprise Cloud Sync</p>
+                <h1 class="text-xl font-bold text-slate-800">LabPulse Demo v1.4.1</h1>
+                <p class="text-slate-500 text-[10px] font-bold uppercase tracking-widest mt-1">Enterprise Cloud Sync</p>
             </div>
             
             <div class="space-y-4">
@@ -38,7 +37,7 @@
                 </div>
                 <div class="flex items-center gap-2 py-1">
                     <input type="checkbox" id="rememberMe" class="w-5 h-5 text-blue-600 rounded border-slate-300">
-                    <label for="rememberMe" class="text-sm text-slate-600 font-medium">זכור אותי</label>
+                    <label for="rememberMe" class="text-sm text-slate-600 font-medium">זכור אותי במכשיר זה</label>
                 </div>
                 <button onclick="unlock(this)" class="w-full bg-slate-900 hover:bg-black text-white py-3 rounded-xl font-bold transition-all shadow-lg active:scale-95">כניסה למערכת</button>
                 <div id="errMsg" class="hidden p-3 rounded-lg bg-rose-50 border border-rose-100 text-rose-600 text-[11px] font-bold text-center leading-tight"></div>
@@ -48,32 +47,37 @@
 
     <div id="app" class="hidden min-h-screen">
         <header class="glass sticky top-0 z-40 border-b border-slate-200 px-4 py-3 flex justify-between items-center">
-            <h2 class="font-bold text-sm">LabPulse Pro</h2>
+            <div class="flex items-center gap-2">
+                <div class="w-8 h-8 bg-blue-600 rounded-lg flex items-center justify-center text-white text-xs"><i class="fas fa-pulse"></i></div>
+                <h2 class="font-bold text-sm">LabPulse Pro</h2>
+            </div>
             <div class="flex gap-2">
-                <button onclick="showSection('dashboard')" class="text-xs font-bold px-2">דשבורד</button>
-                <button onclick="showSection('inventory')" class="text-xs font-bold px-2">ציוד</button>
-                <button onclick="logout()" class="text-rose-500"><i class="fas fa-power-off"></i></button>
+                <button onclick="showSection('dashboard')" class="text-[10px] font-black uppercase">דשבורד</button>
+                <button onclick="showSection('inventory')" class="text-[10px] font-black uppercase">ציוד</button>
+                <button onclick="logout()" class="text-rose-500 p-2"><i class="fas fa-power-off"></i></button>
             </div>
         </header>
 
-        <main class="p-4">
+        <main class="p-4 max-w-lg mx-auto">
             <div id="dashboardSection">
-                <div class="glass p-5 rounded-3xl border border-slate-200 shadow-sm mb-4">
-                    <h3 class="text-[10px] font-bold text-slate-400 uppercase mb-3">תעדוף (ROI)</h3>
+                <div class="glass p-5 rounded-3xl border border-slate-200 shadow-sm mb-6">
+                    <h3 class="text-[10px] font-bold text-slate-400 uppercase mb-4 tracking-widest">תעדוף תיקונים (ROI)</h3>
                     <div id="priorityList" class="space-y-3"></div>
                 </div>
-                <canvas id="mainChart" height="200"></canvas>
+                <div class="glass p-5 rounded-3xl border border-slate-200 shadow-sm">
+                    <canvas id="mainChart" height="200"></canvas>
+                </div>
             </div>
             <div id="inventorySection" class="hidden">
-                <div id="inventoryMobileList" class="divide-y divide-slate-100 bg-white rounded-3xl border shadow-sm"></div>
+                <div id="inventoryMobileList" class="divide-y divide-slate-100 bg-white rounded-3xl border shadow-sm overflow-hidden"></div>
             </div>
         </main>
     </div>
 
-    <div id="detailModal" class="fixed inset-0 z-50 hidden flex items-end justify-center bg-slate-900/60">
-        <div class="glass w-full rounded-t-3xl p-6 max-h-[90vh] overflow-y-auto">
+    <div id="detailModal" class="fixed inset-0 z-50 hidden flex items-end justify-center bg-slate-900/60 p-0 sm:p-4">
+        <div class="glass w-full max-w-xl rounded-t-3xl p-6 shadow-2xl border border-white/20 max-h-[85vh] overflow-y-auto">
             <div id="modalContent"></div>
-            <button onclick="closeModal()" class="mt-6 w-full py-4 bg-slate-100 rounded-2xl font-bold">סגור</button>
+            <button onclick="closeModal()" class="mt-6 w-full py-4 bg-slate-100 rounded-2xl font-bold text-slate-500">סגור</button>
         </div>
     </div>
 
@@ -82,40 +86,43 @@
         let GH = { token: '', repo: '' };
         const PASS = "Sheba2026";
 
-        // פונקציית פענוח מקורית - תואמת לכל הקבצים הקיימים שלך
-        function dec(c, p) {
+        // פונקציית פענוח מתוקנת - מקבלת מחרוזת Base64 נקייה ומפענחת אותה פעם אחת בלבד
+        function decryptData(base64Content, password) {
             try {
-                // שלב 1: ניקוי תווים לא חוקיים ו-Base64
-                const cleanBase64 = c.replace(/\s/g, '');
-                const rawString = atob(cleanBase64);
+                // 1. הפיכה מ-Base64 לטקסט מוצפן (Binary string)
+                const encryptedString = atob(base64Content.replace(/\s/g, ''));
                 
-                // שלב 2: XOR עם הסיסמה
-                let xorResult = "";
-                for (let i = 0; i < rawString.length; i++) {
-                    xorResult += String.fromCharCode(rawString.charCodeAt(i) ^ p.charCodeAt(i % p.length));
+                // 2. ביצוע XOR עם הסיסמה
+                let decryptedString = "";
+                for (let i = 0; i < encryptedString.length; i++) {
+                    decryptedString += String.fromCharCode(encryptedString.charCodeAt(i) ^ password.charCodeAt(i % password.length));
                 }
                 
-                // שלב 3: פענוח תמיכה בעברית (UTF-8)
-                const decoded = decodeURIComponent(escape(xorResult));
-                return JSON.parse(decoded);
+                // 3. טיפול בעברית (UTF-8) - הכרחי עבור assets.dat
+                const finalJson = decodeURIComponent(escape(decryptedString));
+                return JSON.parse(finalJson);
             } catch (e) {
-                console.error("Decryption error:", e);
+                console.error("Decryption Error Details:", e);
                 return null;
             }
         }
 
-        async function fetchFromGH(path) {
+        async function fetchFile(path) {
             const url = `https://api.github.com/repos/${GH.repo}/contents/${path}`;
-            const r = await fetch(url, {
+            const response = await fetch(url, {
                 headers: { 'Authorization': `Bearer ${GH.token}`, 'Accept': 'application/vnd.github.v3+json' }
             });
-            if (!r.ok) throw new Error(r.status === 404 ? `קובץ ${path} חסר` : "שגיאת GitHub");
             
-            const j = await r.json();
-            // ב-GitHub התוכן מגיע כ-Base64 של המחרוזת המוצפנת שלנו
-            const encryptedContent = atob(j.content.replace(/\s/g, ''));
-            const data = dec(encryptedContent, PASS);
-            if (!data) throw new Error(`כשל בפענוח ${path}`);
+            if (!response.ok) {
+                if(response.status === 404) throw new Error(`הקובץ ${path} לא נמצא במאגר.`);
+                throw new Error("שגיאת התחברות ל-GitHub.");
+            }
+            
+            const json = await response.json();
+            // GitHub API מחזיר את התוכן ב-Base64. אנחנו שולחים אותו ישר לפונקציה שלנו.
+            const data = decryptData(json.content, PASS);
+            
+            if (!data) throw new Error(`כשל בפענוח assets.dat - וודא שהקובץ תקין במאגר.`);
             return data;
         }
 
@@ -128,24 +135,24 @@
             const remember = document.getElementById('rememberMe').checked;
 
             if(!GH.token || !GH.repo) {
-                errDiv.innerText = "נא להזין את כל הפרטים";
+                errDiv.innerText = "נא להזין Token ונתיב מאגר.";
                 errDiv.classList.remove('hidden');
                 return;
             }
 
-            btn.innerText = "מתחבר...";
+            btn.innerText = "טוען נתונים...";
             btn.disabled = true;
 
             try {
-                assets = await fetchFromGH('assets.dat');
-                maint = await fetchFromGH('maintenance.dat');
+                // טעינת הנכסים (Assets)
+                assets = await fetchFile('assets.dat');
+                // טעינת היסטוריית התחזוקה
+                maint = await fetchFile('maintenance.dat');
 
                 if (remember) {
                     localStorage.setItem('lp_gh_token_v4', GH.token);
                     localStorage.setItem('lp_gh_repo_v4', GH.repo);
                     localStorage.setItem('lp_remember_v4', 'true');
-                } else {
-                    localStorage.removeItem('lp_remember_v4');
                 }
 
                 document.getElementById('authOverlay').classList.add('hidden');
@@ -167,43 +174,54 @@
 
         function renderPriorities() {
             const list = document.getElementById('priorityList');
-            const sorted = assets.filter(a => a.status === "תיקון").map(a => {
+            const repairItems = assets.filter(a => a.status === "תיקון").map(a => {
                 const logs = maint[a.id] || [];
                 const cost = logs.reduce((sum, l) => sum + (l.cost || 0), 0);
-                const score = (cost / a.value) * (a.critical ? 1.5 : 1);
+                const score = (cost / (a.value || 1)) * (a.critical ? 1.5 : 1);
                 return { ...a, score };
             }).sort((a, b) => b.score - a.score);
 
-            list.innerHTML = sorted.map(a => `
-                <div class="p-4 bg-white border rounded-2xl flex justify-between items-center" onclick="showDetail('${a.id}')">
+            list.innerHTML = repairItems.map(a => `
+                <div class="p-4 bg-white border border-slate-100 rounded-2xl flex justify-between items-center shadow-sm active:bg-slate-50" onclick="showDetail('${a.id}')">
                     <div class="flex items-center gap-3">
-                        <div class="w-1.5 h-8 rounded-full ${a.critical ? 'bg-rose-500' : 'bg-amber-400'}"></div>
-                        <div><p class="font-bold text-sm">${a.name}</p><p class="text-[10px] text-slate-400">${a.dept}</p></div>
+                        <div class="w-1.5 h-10 rounded-full ${a.critical ? 'bg-rose-500' : 'bg-amber-400'}"></div>
+                        <div>
+                            <p class="font-bold text-sm text-slate-800">${a.name}</p>
+                            <p class="text-[10px] text-slate-400 font-bold uppercase">${a.dept}</p>
+                        </div>
                     </div>
-                    <i class="fas fa-chevron-left text-slate-300"></i>
-                </div>`).join('') || '<p class="text-xs text-slate-400 text-center py-4">אין תקלות</p>';
+                    <i class="fas fa-chevron-left text-slate-300 text-xs"></i>
+                </div>`).join('') || '<p class="text-center text-slate-400 text-xs py-4 italic">אין תקלות פתוחות</p>';
         }
 
         function renderInventory() {
             document.getElementById('inventoryMobileList').innerHTML = assets.map(a => `
-                <div class="p-4 flex justify-between items-center" onclick="showDetail('${a.id}')">
-                    <div><p class="font-bold text-sm">${a.name}</p><p class="text-[10px] text-slate-400">${a.id}</p></div>
-                    <span class="text-[9px] font-black uppercase px-2 py-1 rounded ${a.status === 'תקין' ? 'bg-emerald-50 text-emerald-600' : 'bg-rose-50 text-rose-600'}">${a.status}</span>
+                <div class="p-4 flex justify-between items-center active:bg-slate-50" onclick="showDetail('${a.id}')">
+                    <div>
+                        <p class="font-bold text-sm text-slate-800">${a.name}</p>
+                        <p class="text-[10px] text-slate-400 font-mono uppercase">${a.id}</p>
+                    </div>
+                    <span class="px-2 py-1 rounded-lg text-[9px] font-black uppercase ${
+                        a.status === 'תקין' ? 'bg-emerald-50 text-emerald-600' : 'bg-rose-50 text-rose-600'
+                    }">${a.status}</span>
                 </div>`).join('');
         }
 
         function renderChart() {
             const ctx = document.getElementById('mainChart').getContext('2d');
-            const data = {};
+            const stats = {};
             Object.values(maint).flat().forEach(l => {
                 const year = new Date(l.date).getFullYear();
-                data[year] = (data[year] || 0) + 1;
+                stats[year] = (stats[year] || 0) + 1;
             });
             if(chart) chart.destroy();
             chart = new Chart(ctx, {
                 type: 'bar',
-                data: { labels: Object.keys(data), datasets: [{ label: 'תקלות', data: Object.values(data), backgroundColor: '#2563eb', borderRadius: 4 }] },
-                options: { maintainAspectRatio: false, plugins: { legend: { display: false } } }
+                data: { 
+                    labels: Object.keys(stats), 
+                    datasets: [{ label: 'תקלות', data: Object.values(stats), backgroundColor: '#2563eb', borderRadius: 6 }] 
+                },
+                options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } } }
             });
         }
 
@@ -211,14 +229,20 @@
             const a = assets.find(x => x.id === id);
             const logs = maint[id] || [];
             document.getElementById('modalContent').innerHTML = `
-                <h2 class="text-xl font-bold mb-1">${a.name}</h2>
-                <p class="text-xs text-slate-400 mb-6">${a.id} | ${a.dept}</p>
-                <div class="grid grid-cols-2 gap-4 mb-6">
-                    <div class="p-3 bg-slate-50 rounded-2xl"><p class="text-[9px] font-bold text-slate-400">ערך</p><p class="font-bold">₪${a.value.toLocaleString()}</p></div>
-                    <div class="p-3 bg-slate-50 rounded-2xl"><p class="text-[9px] font-bold text-slate-400">חוזה</p><p class="font-bold text-emerald-600">${a.contract || 'ללא'}</p></div>
+                <div class="mb-6">
+                    <h2 class="text-xl font-bold text-slate-800">${a.name}</h2>
+                    <p class="text-xs text-slate-400 font-mono">${a.id} | ${a.model}</p>
                 </div>
-                <h3 class="font-bold text-sm mb-3">היסטוריה</h3>
-                <div class="space-y-2">${logs.map(l => `<div class="p-3 border rounded-xl text-xs"><div class="flex justify-between font-bold"><p>${l.action}</p><p>₪${l.cost}</p></div><p class="text-slate-400">${l.date}</p></div>`).join('') || '<p class="text-xs italic text-slate-400">אין נתונים</p>'}</div>`;
+                <div class="grid grid-cols-2 gap-3 mb-6">
+                    <div class="p-3 bg-slate-50 rounded-2xl border"><p class="text-[9px] font-bold text-slate-400 uppercase mb-1">ערך כינון</p><p class="font-bold text-slate-800">₪${a.value.toLocaleString()}</p></div>
+                    <div class="p-3 bg-slate-50 rounded-2xl border"><p class="text-[9px] font-bold text-slate-400 uppercase mb-1">מחלקה</p><p class="font-bold text-blue-600">${a.dept}</p></div>
+                </div>
+                <h3 class="font-bold text-sm mb-3">היסטוריית טיפולים</h3>
+                <div class="space-y-2">${logs.map(l => `
+                    <div class="p-3 border rounded-xl text-xs bg-white shadow-sm">
+                        <div class="flex justify-between font-bold mb-1"><p>${l.action}</p><p class="text-blue-600">₪${l.cost.toLocaleString()}</p></div>
+                        <p class="text-slate-400 text-[10px]">${l.date} | ${l.technician}</p>
+                    </div>`).join('') || '<p class="text-xs italic text-slate-400">אין נתונים.</p>'}</div>`;
             document.getElementById('detailModal').classList.remove('hidden');
         }
 
