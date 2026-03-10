@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>LabPulse Demo</title>
+    <title>LabPulse Demo v1.4.5</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
@@ -14,6 +14,8 @@
         .card-shadow { box-shadow: 0 4px 20px -2px rgba(0,0,0,0.05); }
         .sync-loading { animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite; }
         @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: .5; } }
+        .custom-scrollbar::-webkit-scrollbar { width: 6px; }
+        .custom-scrollbar::-webkit-scrollbar-thumb { background: #e2e8f0; border-radius: 10px; }
     </style>
 </head>
 <body class="antialiased text-slate-900">
@@ -24,17 +26,17 @@
                 <div class="inline-flex items-center justify-center w-16 h-16 bg-blue-600 rounded-2xl mb-4 text-white text-2xl shadow-lg shadow-blue-200">
                     <i class="fas fa-microscope"></i>
                 </div>
-                <h1 class="text-2xl font-bold text-slate-800">LabPulse Demo v1.4.4</h1>
+                <h1 class="text-2xl font-bold text-slate-800">LabPulse Demo v1.4.5</h1>
             </div>
             
             <div class="space-y-4">
                 <div>
-                    <label class="block text-xs font-semibold text-slate-500 uppercase tracking-wider mb-1 mr-1">GitHub Fine-grained Token</label>
-                    <input type="password" id="ghToken" class="w-full px-4 py-3 rounded-xl border border-slate-200 focus:ring-2 focus:ring-blue-500 outline-none transition-all bg-slate-50/50" placeholder="github_pat_...">
-                </div>
-                <div>
                     <label class="block text-xs font-semibold text-slate-500 uppercase tracking-wider mb-1 mr-1">Repository Path</label>
                     <input type="text" id="ghRepo" class="w-full px-4 py-3 rounded-xl border border-slate-200 focus:ring-2 focus:ring-blue-500 outline-none transition-all bg-slate-50/50" placeholder="username/repo">
+                </div>
+                <div>
+                    <label class="block text-xs font-semibold text-slate-500 uppercase tracking-wider mb-1 mr-1">GitHub Fine-grained Token</label>
+                    <input type="password" id="ghToken" class="w-full px-4 py-3 rounded-xl border border-slate-200 focus:ring-2 focus:ring-blue-500 outline-none transition-all bg-slate-50/50" placeholder="github_pat_...">
                 </div>
                 <div class="flex items-center gap-2 py-2">
                     <input type="checkbox" id="rememberMe" class="w-4 h-4 text-blue-600 rounded border-slate-300 focus:ring-blue-500">
@@ -77,7 +79,7 @@
                 <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
                     <div class="glass p-6 rounded-3xl border border-slate-200 card-shadow">
                         <h3 class="text-slate-500 text-xs font-bold uppercase tracking-widest mb-4">תעדוף תיקונים (ROI)</h3>
-                        <div id="priorityList" class="space-y-4"></div>
+                        <div id="priorityList" class="space-y-4 max-h-[500px] overflow-y-auto custom-scrollbar"></div>
                     </div>
                     <div class="md:col-span-2 glass p-6 rounded-3xl border border-slate-200 card-shadow">
                         <h3 class="text-slate-500 text-xs font-bold uppercase tracking-widest mb-4">פילוח תקלות שנתי</h3>
@@ -85,27 +87,34 @@
                     </div>
                 </div>
             </section>
+            
             <section id="inventorySection" class="hidden">
                 <div class="glass rounded-3xl border border-slate-200 card-shadow overflow-hidden">
-                    <table class="w-full text-right border-collapse">
-                        <thead class="bg-slate-50 border-b border-slate-200">
-                            <tr>
-                                <th class="p-4 text-xs font-bold text-slate-500 uppercase">מזהה</th>
-                                <th class="p-4 text-xs font-bold text-slate-500 uppercase">מכשיר</th>
-                                <th class="p-4 text-xs font-bold text-slate-500 uppercase">מחלקה</th>
-                                <th class="p-4 text-xs font-bold text-slate-500 uppercase">סטטוס</th>
-                                <th class="p-4 text-xs font-bold text-slate-500 uppercase">פעולות</th>
-                            </tr>
-                        </thead>
-                        <tbody id="inventoryBody" class="divide-y divide-slate-100"></tbody>
-                    </table>
+                    <div class="p-4 bg-slate-50/50 border-b border-slate-200 flex justify-between items-center">
+                        <input type="text" id="searchBox" onkeyup="renderInventory()" placeholder="חיפוש לפי שם או מזהה..." class="px-4 py-2 rounded-lg border border-slate-200 text-sm outline-none w-64 focus:ring-2 focus:ring-blue-500 transition-all">
+                        <span id="itemCount" class="text-xs font-bold text-slate-400"></span>
+                    </div>
+                    <div class="max-h-[600px] overflow-y-auto custom-scrollbar">
+                        <table class="w-full text-right border-collapse">
+                            <thead class="bg-slate-50 sticky top-0 z-10 shadow-sm">
+                                <tr>
+                                    <th class="p-4 text-xs font-bold text-slate-500 uppercase">מזהה</th>
+                                    <th class="p-4 text-xs font-bold text-slate-500 uppercase">מכשיר</th>
+                                    <th class="p-4 text-xs font-bold text-slate-500 uppercase">מחלקה</th>
+                                    <th class="p-4 text-xs font-bold text-slate-500 uppercase">סטטוס</th>
+                                    <th class="p-4 text-xs font-bold text-slate-500 uppercase">פעולות</th>
+                                </tr>
+                            </thead>
+                            <tbody id="inventoryBody" class="divide-y divide-slate-100"></tbody>
+                        </table>
+                    </div>
                 </div>
             </section>
         </main>
     </div>
 
     <div id="detailModal" class="fixed inset-0 z-50 hidden flex items-center justify-center bg-slate-900/60 p-4">
-        <div class="glass w-full max-w-2xl max-h-[90vh] overflow-y-auto rounded-3xl shadow-2xl p-8 border border-white/20">
+        <div class="glass w-full max-w-2xl max-h-[90vh] overflow-y-auto rounded-3xl shadow-2xl p-8 border border-white/20 custom-scrollbar">
             <div id="modalContent"></div>
             <button onclick="closeModal()" class="mt-8 w-full py-3 bg-slate-100 hover:bg-slate-200 rounded-xl font-bold transition-colors">סגור</button>
         </div>
@@ -114,7 +123,7 @@
     <script>
         let assets = [], maint = {}, chart;
         let GH = { token: '', repo: '' };
-        const PASS = "Sheba2026"; // Hardcoded version 4.0 key
+        const PASS = "Sheba2026";
 
         function enc(d, p) {
             try {
@@ -127,14 +136,13 @@
         function dec(c, p) {
             if (!c || typeof c !== 'string') return null;
             try {
-                // Remove any whitespace or newlines from Base64 string
                 const cleanB64 = c.replace(/\s/g, '');
                 const encrypted = Uint8Array.from(atob(cleanB64), x => x.charCodeAt(0));
                 const decrypted = encrypted.map((v, i) => v ^ p.charCodeAt(i % p.length));
                 const decodedString = new TextDecoder().decode(decrypted);
                 return JSON.parse(decodedString);
             } catch(e) { 
-                console.error("Decryption failed. Likely key mismatch or corrupted data.");
+                console.error("Decryption Error - Possible key mismatch or bad encoding.");
                 return null; 
             }
         }
@@ -143,7 +151,6 @@
             if (!GH.token || !GH.repo) return;
             const indText = document.getElementById('syncText');
             const indDot = document.getElementById('syncDot');
-            
             indText.innerText = "מעדכן ענן...";
             indDot.classList.add('sync-loading');
             indDot.classList.replace('bg-emerald-500', 'bg-amber-500');
@@ -151,25 +158,16 @@
             try {
                 const url = `https://api.github.com/repos/${GH.repo}/contents/${path}`;
                 const headers = { 'Authorization': `Bearer ${GH.token}`, 'Accept': 'application/vnd.github.v3+json' };
-
                 const refRes = await fetch(url, { headers });
                 let sha = null;
-                if (refRes.ok) {
-                    const refData = await refRes.json();
-                    sha = refData.sha;
-                }
-
-                // enc() produces a single Base64 string
-                const content = enc(data, PASS);
-                const body = { message: `v4.0 Sync: ${path}`, content: content, sha: sha };
+                if (refRes.ok) sha = (await refRes.json()).sha;
 
                 const res = await fetch(url, {
                     method: 'PUT',
                     headers: { ...headers, 'Content-Type': 'application/json' },
-                    body: JSON.stringify(body)
+                    body: JSON.stringify({ message: `LabPulse v4.0 Sync: ${path}`, content: enc(data, PASS), sha: sha })
                 });
-
-                if(!res.ok) throw new Error("Sync Failed");
+                if(!res.ok) throw new Error("Sync failure");
                 indText.innerText = "ענן מסונכרן";
                 indDot.classList.remove('sync-loading');
                 indDot.classList.replace('bg-amber-500', 'bg-emerald-500');
@@ -180,18 +178,7 @@
         }
 
         async function loadData() {
-            // 1. Local Files
-            try {
-                const aRaw = await fetch('assets.dat').then(r => r.ok ? r.text() : null);
-                const mRaw = await fetch('maintenance.dat').then(r => r.ok ? r.text() : null);
-                if (aRaw && mRaw) {
-                    const a = dec(aRaw, PASS);
-                    const m = dec(mRaw, PASS);
-                    if (a && m) return { a, m };
-                }
-            } catch (e) {}
-
-            // 2. GitHub Fallback
+            // Priority 1: GitHub API (Essential for GitHub Pages deployment)
             if (GH.token && GH.repo) {
                 try {
                     const fetchGH = async (p) => {
@@ -200,16 +187,23 @@
                         });
                         if (!r.ok) return null;
                         const j = await r.json();
-                        // CRITICAL: GitHub API returns base64(file_content). 
-                        // Since file_content is ALREADY base64(enc_data), we decode once to get the .dat string.
+                        // GitHub content is Base64(FileContent), FileContent is Base64(EncryptedJSON)
                         const datString = atob(j.content.replace(/\s/g, ''));
                         return dec(datString, PASS);
                     };
                     const a = await fetchGH('assets.dat');
                     const m = await fetchGH('maintenance.dat');
                     if (a && m) return { a, m };
-                } catch (e) { console.error("GitHub fetch failed", e); }
+                } catch (e) { console.error("Cloud fetch error:", e); }
             }
+
+            // Priority 2: Local Fetch (Fallback)
+            try {
+                const aRaw = await fetch('assets.dat').then(r => r.ok ? r.text() : null);
+                const mRaw = await fetch('maintenance.dat').then(r => r.ok ? r.text() : null);
+                if (aRaw && mRaw) return { a: dec(aRaw, PASS), m: dec(mRaw, PASS) };
+            } catch (e) {}
+
             return null;
         }
 
@@ -220,16 +214,14 @@
             
             GH.token = document.getElementById('ghToken').value.trim();
             GH.repo = document.getElementById('ghRepo').value.trim();
-            const remember = document.getElementById('rememberMe').checked;
-
             btn.innerText = "מתחבר...";
-            const data = await loadData();
             
+            const data = await loadData();
             if (data && Array.isArray(data.a)) {
                 assets = data.a;
-                maint = data.m;
+                maint = data.m || {};
                 
-                if (remember) {
+                if (document.getElementById('rememberMe').checked) {
                     localStorage.setItem('lp_gh_token_v4', GH.token);
                     localStorage.setItem('lp_gh_repo_v4', GH.repo);
                     localStorage.setItem('lp_remember_v4', 'true');
@@ -239,39 +231,29 @@
                 updateUI();
             } else {
                 btn.innerText = "כניסה למערכת";
-                err.innerText = "שגיאת פענוח: הקבצים לא תואמים לגרסה 4.0 או שהסיסמה שגויה";
+                err.innerText = "שגיאת נתונים - וודא שהקבצים הועלו ל-GitHub ופרטי הגישה נכונים";
                 err.classList.remove('hidden');
             }
         }
 
         function resetData() {
-            if(confirm("האם למחוק את פרטי הגישה השמורים בדפדפן?")) {
-                localStorage.removeItem('lp_gh_token_v4');
-                localStorage.removeItem('lp_gh_repo_v4');
-                localStorage.removeItem('lp_remember_v4');
+            if(confirm("למחוק את פרטי הגישה מהדפדפן?")) {
+                localStorage.clear();
                 location.reload();
             }
         }
 
         function logout() { location.reload(); }
-
-        function updateUI() {
-            renderPriorities();
-            renderInventory();
-            renderChart();
-        }
+        function updateUI() { renderPriorities(); renderInventory(); renderChart(); }
 
         function renderPriorities() {
             const list = document.getElementById('priorityList');
-            const sorted = assets
-                .filter(a => a.status === "תיקון")
+            const sorted = assets.filter(a => a.status === "תיקון")
                 .map(a => {
                     const logs = maint[a.id] || [];
                     const cost = logs.reduce((sum, l) => sum + (l.cost || 0), 0);
-                    const score = (cost / (a.value || 1)) * (a.critical ? 1.5 : 1);
-                    return { ...a, score };
-                })
-                .sort((a, b) => b.score - a.score);
+                    return { ...a, score: (cost / (a.value || 1)) * (a.critical ? 1.5 : 1) };
+                }).sort((a, b) => b.score - a.score).slice(0, 50);
 
             list.innerHTML = sorted.map(a => `
                 <div class="flex items-center justify-between p-3 rounded-2xl bg-slate-50 border border-slate-100">
@@ -286,15 +268,17 @@
 
         function renderInventory() {
             const body = document.getElementById('inventoryBody');
-            body.innerHTML = assets.map(a => `
+            const q = document.getElementById('searchBox').value.toLowerCase();
+            const filtered = assets.filter(a => a.name.toLowerCase().includes(q) || a.id.toLowerCase().includes(q));
+            document.getElementById('itemCount').innerText = `מציג ${filtered.length} מתוך ${assets.length}`;
+            
+            body.innerHTML = filtered.slice(0, 100).map(a => `
                 <tr class="hover:bg-slate-50/50 transition-colors">
                     <td class="p-4 text-xs font-mono text-slate-400">${a.id}</td>
                     <td class="p-4 font-bold text-sm">${a.name}</td>
                     <td class="p-4 text-sm text-slate-600">${a.dept}</td>
-                    <td class="p-4">
-                        <span class="px-3 py-1 rounded-full text-[10px] font-bold uppercase ${a.status === 'תקין' ? 'bg-emerald-100 text-emerald-700' : 'bg-rose-100 text-rose-700'}">${a.status}</span>
-                    </td>
-                    <td class="p-4"><button onclick="showDetail('${a.id}')" class="text-slate-400 hover:text-blue-600"><i class="fas fa-eye"></i></button></td>
+                    <td class="p-4"><span class="px-3 py-1 rounded-full text-[10px] font-bold uppercase ${a.status === 'תקין' ? 'bg-emerald-100 text-emerald-700' : 'bg-rose-100 text-rose-700'}">${a.status}</span></td>
+                    <td class="p-4"><button onclick="showDetail('${a.id}')" class="text-slate-400 hover:text-blue-600 transition-all"><i class="fas fa-eye"></i></button></td>
                 </tr>
             `).join('');
         }
@@ -304,13 +288,13 @@
             const counts = {};
             Object.values(maint).flat().forEach(l => {
                 const year = new Date(l.date).getFullYear();
-                counts[year] = (counts[year] || 0) + 1;
+                if(year > 2018) counts[year] = (counts[year] || 0) + 1;
             });
             if(chart) chart.destroy();
             chart = new Chart(ctx, {
                 type: 'line',
                 data: {
-                    labels: Object.keys(counts),
+                    labels: Object.keys(counts).sort(),
                     datasets: [{ label: 'תקלות', data: Object.values(counts), borderColor: '#2563eb', tension: 0.4, fill: true, backgroundColor: 'rgba(37, 99, 235, 0.05)' }]
                 },
                 options: { plugins: { legend: { display: false } }, scales: { y: { beginAtZero: true } } }
@@ -320,19 +304,24 @@
         function showDetail(id) {
             const a = assets.find(x => x.id === id);
             const logs = maint[id] || [];
-            const modal = document.getElementById('detailModal');
             document.getElementById('modalContent').innerHTML = `
                 <div class="text-right">
                     <h2 class="text-2xl font-bold">${a.name}</h2>
                     <p class="text-slate-400 font-mono text-sm">${a.id} | ${a.model}</p>
                     <div class="grid grid-cols-2 gap-4 my-6">
-                        <div class="p-4 bg-slate-50 rounded-2xl border border-slate-100"><p class="text-[10px] font-bold text-slate-400 uppercase">ערך כינון</p><p class="text-xl font-bold">₪${(a.value || 0).toLocaleString()}</p></div>
-                        <div class="p-4 bg-slate-50 rounded-2xl border border-slate-100"><p class="text-[10px] font-bold text-slate-400 uppercase">מחלקה</p><p class="text-xl font-bold text-blue-600">${a.dept}</p></div>
+                        <div class="p-4 bg-slate-50 rounded-2xl border border-slate-100">
+                            <p class="text-[10px] font-bold text-slate-400 uppercase">ערך כינון</p>
+                            <p class="text-xl font-bold">₪${(a.value || 0).toLocaleString()}</p>
+                        </div>
+                        <div class="p-4 bg-slate-50 rounded-2xl border border-slate-100">
+                            <p class="text-[10px] font-bold text-slate-400 uppercase">מחלקה</p>
+                            <p class="text-xl font-bold text-blue-600">${a.dept}</p>
+                        </div>
                     </div>
                     <h3 class="font-bold mb-4">היסטוריית תחזוקה</h3>
-                    <div class="space-y-2">${logs.map(l => `<div class="flex justify-between p-3 bg-white border border-slate-100 rounded-xl shadow-sm"><div><p class="font-bold text-sm">${l.action}</p><p class="text-xs text-slate-400">${l.date}</p></div><p class="font-bold text-blue-600">₪${(l.cost || 0).toLocaleString()}</p></div>`).join('') || 'אין היסטוריה'}</div>
+                    <div class="space-y-2">${logs.map(l => `<div class="flex justify-between p-3 bg-white border border-slate-100 rounded-xl shadow-sm"><div><p class="font-bold text-sm">${l.action}</p><p class="text-xs text-slate-400">${l.date}</p></div><p class="font-bold text-blue-600">₪${(l.cost || 0).toLocaleString()}</p></div>`).join('') || 'אין היסטוריה זמינה'}</div>
                 </div>`;
-            modal.classList.remove('hidden');
+            document.getElementById('detailModal').classList.remove('hidden');
         }
 
         function closeModal() { document.getElementById('detailModal').classList.add('hidden'); }
